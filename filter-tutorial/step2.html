@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display a map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+    /*
+
+    Example from Mapster dealing with filters on maps
+    Exclusive, inclusive, and nested categories
+
+    */
+
+		// Some globals
+		let markers = []
+
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [-99.18690945, 49.86333426], // starting position [lng, lat]
+        zoom: 4 // starting zoom
+    });
+
+    // This is an example using jQuery, but doing this with React would probably be a little simpler
+    // since you wouldn't have to do as much DOM manipulation
+    // The principles are the same
+
+		// We need to organize a "key" for the categories, so we can display and know the hierarchy
+		const categoryKey = [{
+			id : 1,
+			term : "Schools",
+			children : [{
+				id : 6,
+				term : "High School"
+			},{
+				id : 7,
+				term : "Middle School"
+			}]
+		},{
+			id : 2,
+			term : "Community Partners",
+			children : [{
+				id : 3,
+				term : "Cooking"
+			},{
+				id : 4,
+				term : "Preserving"
+			},{
+				id : 5,
+				term : "Seed Saving"
+			}]
+		},{
+			id : 8,
+			term : "Region",
+			children : [{
+				id : 9,
+				term : "British Columbia"
+			},{
+				id : 10,
+				term : "Alberta"
+			},{
+				id : 11,
+				term : "Manitoba"
+			},{
+				id : 12,
+				term : "Ontario"
+			},{
+				id : 12,
+				term : "Saskatchewan"
+			}]
+		}]
+    // Getting a geoJSON of the things we're mapping and putting them on the map
+		map.on('load', () => {
+			fetch('./sample_data.json').then(resp => resp.json()).then(response => {
+				console.log(response);
+
+				// Obviously, you can style and color these as you like according to the most important categories!
+
+				// Adding as markers https://maplibre.org/maplibre-gl-js-docs/example/add-a-marker/
+				response.features.forEach(feature => {
+					let marker = new maplibregl.Marker().setLngLat(feature.geometry.coordinates).addTo(map);
+					marker.savedProperties = feature.properties
+					markers.push(marker)
+				})
+
+				// Adding as circles
+				// map.addSource("locations", {
+				// 	type : "geojson",
+				// 	data : response
+				// })
+				//
+				// map.addLayer({
+				// 	id : "circle-locations",
+				// 	type : "circle",
+				// 	source : "locations",
+				// 	paint : {
+				// 		"circle-color" : "#FF0000"
+				// 	}
+				// })
+
+			})
+		})
+
+    // Building the control with the checkboxes
+		// Each HTML element should have a way of indicating to the function its ID as well as its parent (if any)
+		// Toggling child checkbox visibility is optional
+
+    // Listening for any changes in any of the checkboxes
+
+    	// On a change, review ALL the checkboxes
+
+			// Check if their parents are completely without child checkboxes (if so, auto-uncheck them)
+			// Or, any children, auto-check or uncheck
+
+			// Build an array of "inactiveToggles" IDs or terms
+			// Loop over your features and build an array of "features to hide"
+				// Note the differences here in "exclusive" vs "inclusive" filtering
+
+			// Adjust the mapbox features
+			// Markers and symbols are done differently
+
+</script>
+
+</body>
+</html>

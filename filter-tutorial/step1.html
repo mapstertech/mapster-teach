@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display a map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+    /*
+
+    Example from Mapster dealing with filters on maps
+    Exclusive, inclusive, and nested categories
+
+    */
+
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+    // This is an example using jQuery, but doing this with React would probably be a little simpler
+    // since you wouldn't have to do as much DOM manipulation
+    // The principles are the same
+
+		// We need to organize a "key" for the categories, so we can display and know the hierarchy
+    // Getting a geoJSON of the things we're mapping and putting them on the map
+
+    // Building the control with the checkboxes
+		// Each HTML element should have a way of indicating to the function its ID as well as its parent (if any)
+		// Toggling child checkbox visibility is optional
+
+    // Listening for any changes in any of the checkboxes
+
+    	// On a change, review ALL the checkboxes
+
+			// Check if their parents are completely without child checkboxes (if so, auto-uncheck them)
+			// Or, any children, auto-check or uncheck
+
+			// Build an array of "inactiveToggles" IDs or terms
+			// Loop over your features and build an array of "features to hide"
+				// Note the differences here in "exclusive" vs "inclusive" filtering
+
+			// Adjust the mapbox features
+			// Markers and symbols are done differently
+
+</script>
+
+</body>
+</html>
