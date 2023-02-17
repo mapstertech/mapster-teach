@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Add dome in Mapbox GL JS using a hex grid and polygon extrusions</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
+var startingPoint = [ 151.1745, -33.9411 ];
+var directionalPoint = [ 151.17435336112976, -33.94063633939664 ]
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v9',
+    center: startingPoint,
+    zoom: 20,
+    pitch: 60
+});
+
+let coneFeatureCollection = { type : "FeatureCollection", features : [] }
+
+let baseWidthInKM = 3 / 1000;
+let baseHeight = 0.8;
+let levelsOfCone = 20;
+const scale = 1;
+
+coneFeatureCollection.features.push({
+  type : "Feature",
+  properties : {
+    color : "#000000",
+    base_height : 0,
+    top_height : baseHeight * scale
+  },
+  geometry : turf.envelope(turf.buffer(turf.circle(startingPoint, baseWidthInKM * scale), (baseWidthInKM/3) * scale)).geometry
+})
+
+let whiteLevelsBottom = levelsOfCone/3;
+let whiteLevelsTop = levelsOfCone/1.5;
+
+for(let i=0; i<levelsOfCone; i++) {
+  let roadConeLevel = turf.circle(startingPoint, (baseWidthInKM - (baseWidthInKM * ((i + 1) * 0.8/levelsOfCone))) * scale);
+  coneFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : i > whiteLevelsBottom && i < whiteLevelsTop ? '#FFFFFF' : "#FF7221",
+      // color : "#FF7221",
+      base_height : (baseHeight + (i * 0.2)) * scale,
+      top_height : (baseHeight + ((i * baseHeight) + 0.2)) * scale
+    },
+    geometry : roadConeLevel.geometry
+  })
+}
+
+console.log(coneFeatureCollection);
+
+map.on('load', function () {
+	map.addSource('dome', {
+		type: 'geojson',
+		data: coneFeatureCollection
+	});
+
+	map.addLayer({
+		id: 'dome',
+		type: 'fill-extrusion',
+		source: 'dome',
+		layout: {},
+		paint: {
+			'fill-extrusion-color': {
+				type: 'identity',
+				property: 'color'
+			},
+			'fill-extrusion-base': {
+				type: 'identity',
+				property: 'base_height'
+			},
+			'fill-extrusion-height': {
+				type: 'identity',
+				property: 'top_height'
+			},
+			'fill-extrusion-opacity': 1
+		}
+	});
+});
+</script>
+
+</body>
+</html>

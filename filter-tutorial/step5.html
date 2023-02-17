@@ -240,21 +240,21 @@
 			let idsToHide = []
 			features.forEach(feature => {
 				// Exclusive
-				let hideFeature = false
-				let arrayOfCategories = feature.properties.categories.split(',')
-				inactiveToggles.forEach(inactiveToggle => {
-					if(arrayOfCategories.indexOf(inactiveToggle.toString()) > -1) {
-						hideFeature = true
-					}
-				})
-				// Inclusive
-				// let hideFeature = true
+				// let hideFeature = false
 				// let arrayOfCategories = feature.properties.categories.split(',')
-				// arrayOfCategories.forEach(thisCategory => {
-				// 	if(inactiveToggles.indexOf(parseInt(thisCategory)) === -1) {
-				// 		hideFeature = false
+				// inactiveToggles.forEach(inactiveToggle => {
+				// 	if(arrayOfCategories.indexOf(inactiveToggle.toString()) > -1) {
+				// 		hideFeature = true
 				// 	}
 				// })
+				// Inclusive
+				let hideFeature = true
+				let arrayOfCategories = feature.properties.categories.split(',')
+				arrayOfCategories.forEach(thisCategory => {
+					if(inactiveToggles.indexOf(parseInt(thisCategory)) === -1) {
+						hideFeature = false
+					}
+				})
 				if(hideFeature) {
 					idsToHide.push(feature.properties.id)
 				}

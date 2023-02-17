@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Add dome in Mapbox GL JS using a hex grid and polygon extrusions</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
+var startingPoint = [ 151.1745, -33.9411 ];
+var directionalPoint = [ 151.17435336112976, -33.94063633939664 ]
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v9',
+    center: startingPoint,
+    zoom: 13,
+    pitch: 60
+});
+
+function generateSign(startingPoint, directionalPoint, bearing) {
+
+  let signFeatureCollection = { type : "FeatureCollection", features : [] }
+
+  let baseWidthInKM = 1 / 1000;
+
+  const lengthOfLine = turf.distance(startingPoint, directionalPoint)
+  let angleOfLine = turf.bearing(startingPoint, directionalPoint);
+  const midPoint = turf.destination(startingPoint, lengthOfLine/2, angleOfLine);
+  angleOfLine = angleOfLine + (bearing-90);
+
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#964B00",
+      base_height : 0,
+      top_height : 30
+    },
+    geometry : turf.envelope(turf.buffer(turf.circle(midPoint, baseWidthInKM), baseWidthInKM)).geometry
+  })
+
+  const newStartingPoint = turf.destination(midPoint, lengthOfLine/2, angleOfLine);
+  const newDirectionalPoint = turf.destination(midPoint, lengthOfLine/2, angleOfLine+180);
+
+  const signCorner1 = turf.destination(newStartingPoint, lengthOfLine/10, angleOfLine+90);
+  const signCorner2 = turf.destination(newStartingPoint, lengthOfLine/10, angleOfLine-90);
+  const signCorner3 = turf.destination(newDirectionalPoint, lengthOfLine/10, angleOfLine-90);
+  const signCorner4 = turf.destination(newDirectionalPoint, lengthOfLine/10, angleOfLine+90);
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#FFFFFF",
+      base_height : 30,
+      top_height : 90
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        signCorner1.geometry.coordinates,
+        signCorner2.geometry.coordinates,
+        signCorner3.geometry.coordinates,
+        signCorner4.geometry.coordinates,
+        signCorner1.geometry.coordinates
+      ]]
+    }
+  })
+
+
+  // Sign lettering
+  const growingTriangleSteps = 100;
+  let baseWidth = lengthOfLine/6;
+  let currentHeight = 0;
+  let latestBase = 0;
+  for(let i=0; i < growingTriangleSteps; i++) {
+    const signCircleRoot1 = turf.destination(midPoint, baseWidth * (i/10)/6, angleOfLine)
+    const signCircleRoot2 = turf.destination(midPoint, baseWidth * (i/10)/6, angleOfLine+180)
+    latestBase = baseWidth * (i/10)/6;
+    const signCircle1 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine+90);
+    const signCircle2 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine-90);
+    const signCircle3 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine-90);
+    const signCircle4 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine+90);
+    currentHeight = 36.1 + (0.1 * i)
+    signFeatureCollection.features.push(turf.buffer({
+      type : "Feature",
+      properties : {
+        color : "#126DB6",
+        base_height : 36 + (0.1 * i),
+        top_height : 36.1 + (0.1 * i)
+      },
+      geometry : {
+        type : "Polygon",
+        coordinates : [[
+          signCircle1.geometry.coordinates,
+          signCircle2.geometry.coordinates,
+          signCircle3.geometry.coordinates,
+          signCircle4.geometry.coordinates,
+          signCircle1.geometry.coordinates
+        ]]
+      }
+    }, 0.0005))
+  }
+
+  let possibleXValues = [];
+  let radius = 10;
+  let ySteps = 200;
+  for(let i=0;i<ySteps;i++) {
+    let totalHeight = radius*2;
+    let currentYValue = (totalHeight/ySteps) * i;
+    let xValue = Math.sqrt((radius*radius) - (currentYValue*currentYValue))
+    if(!isNaN(xValue)) {
+      possibleXValues.push(xValue)
+    }
+  }
+  possibleXValues.reverse()
+
+  const growingCircleSteps = 100;
+  const growingHeight = currentHeight - 5.7;
+  const heightSteps = 0.15 * 1.5;
+  let growingBase = 0;
+  let baseValues = [];
+  latestBase = latestBase * 1.5
+  for(let i=0; i < growingCircleSteps; i++) {
+    let newBaseValue = (latestBase * (possibleXValues[i]/(radius)))
+    baseValues.push(newBaseValue)
+    const signCircleRoot1 = turf.destination(midPoint, newBaseValue, angleOfLine)
+    const signCircleRoot2 = turf.destination(midPoint, newBaseValue, angleOfLine+180)
+    const signCircle1 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine+90);
+    const signCircle2 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine-90);
+    const signCircle3 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine-90);
+    const signCircle4 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine+90);
+    currentHeight = (growingHeight+heightSteps) + (heightSteps * i)
+    signFeatureCollection.features.push(turf.buffer({
+      type : "Feature",
+      properties : {
+        color : "#126DB6",
+        base_height : (growingHeight) + (heightSteps * i),
+        top_height : (growingHeight+heightSteps) + (heightSteps * i)
+      },
+      geometry : {
+        type : "Polygon",
+        coordinates : [[
+          signCircle1.geometry.coordinates,
+          signCircle2.geometry.coordinates,
+          signCircle3.geometry.coordinates,
+          signCircle4.geometry.coordinates,
+          signCircle1.geometry.coordinates
+        ]]
+      }
+    }, 0.0005))
+  }
+  const shrinkingBaseValues = baseValues.reverse();
+  for(let i=0; i < shrinkingBaseValues.length; i++) {
+    const signCircleRoot1 = turf.destination(midPoint, shrinkingBaseValues[i], angleOfLine)
+    const signCircleRoot2 = turf.destination(midPoint, shrinkingBaseValues[i], angleOfLine+180)
+    const signCircle1 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine+90);
+    const signCircle2 = turf.destination(signCircleRoot1, lengthOfLine/10, angleOfLine-90);
+    const signCircle3 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine-90);
+    const signCircle4 = turf.destination(signCircleRoot2, lengthOfLine/10, angleOfLine+90);
+    signFeatureCollection.features.push(turf.buffer({
+      type : "Feature",
+      properties : {
+        color : "#126DB6",
+        base_height : (currentHeight) + (heightSteps * i),
+        top_height : (currentHeight+heightSteps) + (heightSteps * i)
+      },
+      geometry : {
+        type : "Polygon",
+        coordinates : [[
+          signCircle1.geometry.coordinates,
+          signCircle2.geometry.coordinates,
+          signCircle3.geometry.coordinates,
+          signCircle4.geometry.coordinates,
+          signCircle1.geometry.coordinates
+        ]]
+      }
+    }, 0.0005))
+  }
+
+  // Drawing the P
+  // P stem
+  const distanceToPRoot = lengthOfLine/9;
+  const pStemRoot = turf.destination(midPoint, distanceToPRoot, angleOfLine)
+  const pStemCorner1 = turf.destination(pStemRoot, lengthOfLine/7.3, angleOfLine+45+10);
+  const pStemCorner2 = turf.destination(pStemRoot, lengthOfLine/7.3, angleOfLine+90+45-10);
+  const pStemCorner3 = turf.destination(pStemRoot, lengthOfLine/7.3, angleOfLine+180+45+10);
+  const pStemCorner4 = turf.destination(pStemRoot, lengthOfLine/7.3, angleOfLine+270+45-10);
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#FFFFFF",
+      base_height : 48,
+      top_height : 78
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        pStemCorner1.geometry.coordinates,
+        pStemCorner2.geometry.coordinates,
+        pStemCorner3.geometry.coordinates,
+        pStemCorner4.geometry.coordinates,
+        pStemCorner1.geometry.coordinates
+      ]]
+    }
+  })
+  // P top
+  const pTopCorner = turf.destination(pStemRoot, lengthOfLine/3.5, angleOfLine - 180)
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#FFFFFF",
+      base_height : 73,
+      top_height : 78
+    },
+    geometry : turf.buffer({
+      type : "LineString",
+      coordinates : [
+        pStemRoot.geometry.coordinates,
+        pTopCorner.geometry.coordinates
+      ]
+    }, baseWidthInKM*6).geometry
+  })
+  // pBottom
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#FFFFFF",
+      base_height : 60,
+      top_height : 65
+    },
+    geometry : turf.buffer({
+      type : "LineString",
+      coordinates : [
+        pStemRoot.geometry.coordinates,
+        pTopCorner.geometry.coordinates
+      ]
+    }, baseWidthInKM*6).geometry
+  })
+  // pRight
+  const pRightCorner1 = turf.destination(pTopCorner, lengthOfLine/8, angleOfLine+45+20);
+  const pRightCorner2 = turf.destination(pTopCorner, lengthOfLine/8, angleOfLine+90+45-20);
+  const pRightCorner3 = turf.destination(pTopCorner, lengthOfLine/8, angleOfLine+180+45+20);
+  const pRightCorner4 = turf.destination(pTopCorner, lengthOfLine/8, angleOfLine+270+45-20);
+  signFeatureCollection.features.push({
+    type : "Feature",
+    properties : {
+      color : "#FFFFFF",
+      base_height : 60.2,
+      top_height : 78
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        pRightCorner1.geometry.coordinates,
+        pRightCorner2.geometry.coordinates,
+        pRightCorner3.geometry.coordinates,
+        pRightCorner4.geometry.coordinates,
+        pRightCorner1.geometry.coordinates
+      ]]
+    }
+  })
+  return signFeatureCollection;
+}
+
+map.on('load', function () {
+	map.addSource('dome', {
+		type: 'geojson',
+		data: generateSign(startingPoint, directionalPoint, 0)
+	});
+
+	map.addLayer({
+		id: 'dome',
+		type: 'fill-extrusion',
+		source: 'dome',
+		layout: {},
+		paint: {
+			'fill-extrusion-color': {
+				type: 'identity',
+				property: 'color'
+			},
+			'fill-extrusion-base': {
+				type: 'identity',
+				property: 'base_height'
+			},
+			'fill-extrusion-height': {
+				type: 'identity',
+				property: 'top_height'
+			},
+			'fill-extrusion-opacity': 1
+		}
+	});
+
+  // let interval = false;
+  // map.on('rotatestart', () => {
+  //   interval = setInterval(() => {
+  //     const newSign = generateSign(startingPoint, directionalPoint, map.getBearing());
+  //     map.getSource('dome').setData(newSign);
+  //   }, 250);
+  // });
+  // map.on('rotateend', () => {
+  //   if(interval) {
+  //     clearInterval(interval);
+  //   }
+  // });
+
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display a map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://cdn.rawgit.com/Keyang/node-csvtojson/d41f44aa/browser/csvtojson.min.js"></script>
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+    map.on("load", () => {
+      fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTMBimgxn7THinyU2cWKxNWn_XPoLQsDIH9RmZi_GDhRJEY8AVum7B_22ui9ISydrwWYTAFZlbTRD5n/pub?output=csv").then(resp => resp.text()).then(response => {
+        csv().fromString(response).then(rows => {
+          console.log(rows)
+
+          let points = rows.filter(row => row.latitude !== "" && row.longitude !== "")
+          let polygons = rows.filter(row => row.polygon !== "")
+          let pointsToGeocode = rows.filter(row => row.latitude === "" && row.longitude === "" && row.address !== "")
+
+          if(pointsToGeocode.length > 0) {
+            geocodeData(pointsToGeocode, points, polygons)
+          } else {
+            addGeoData(points, polygons)
+          }
+
+
+        })
+      })
+    })
+
+    function geocodeData(pointsToGeocode, points, polygons) {
+      let pointsToAddToMap = []
+      pointsToGeocode.forEach((point, index) => {
+        setTimeout(() => {
+          fetch(`https://nominatim.openstreetmap.org/search?q=${point.address}&format=geojson&addressdetails=1`).then(resp => resp.json()).then(response => {
+            console.log(response)
+
+            // Getting out the lat/lng
+            if(response.features.length > 0) {
+              let pointCopy = JSON.parse(JSON.stringify(point))
+              pointCopy.longitude = response.features[0].geometry.coordinates[0]
+              pointCopy.latitude = response.features[0].geometry.coordinates[1]
+              pointsToAddToMap.push(pointCopy)
+            }
+
+            // Finishing geocoding and adding to map
+            if(index === pointsToGeocode.length - 1) {
+              pointsToAddToMap = pointsToAddToMap.concat(points)
+              console.log('done geocoding')
+              addGeoData(pointsToAddToMap, polygons)
+            }
+
+          })
+        }, 1500 * index)
+      })
+    }
+
+    function addGeoData(points, polygons) {
+
+      // Points as markers is easy
+      points.forEach(point => {
+        var marker = new maplibregl.Marker()
+          .setLngLat([parseFloat(point.longitude), parseFloat(point.latitude)])
+          .addTo(map);
+      })
+
+      // We need to do some parsing of the coordinates from strings for the polygons
+      // polygons.forEach(polygon => {
+      //   console.log(polygon)
+      //   let splitArray = polygon.polygon.split('],[')
+      //   let splitWithExtraCharactersRemoved = splitArray.map(item => item.replace('[', '').replace(']', ''))
+      //   console.log(splitWithExtraCharactersRemoved)
+      // })
+
+      let polyFeatureCollection = {
+        type : "FeatureCollection",
+        features : polygons.map(polygon => {
+          let coordinates = []
+          let splitArray = polygon.polygon.split('],[')
+          let splitWithExtraCharactersRemoved = splitArray.map(item => item.replace('[', '').replace(']', ''))
+          coordinates = splitWithExtraCharactersRemoved.map(coordSet => {
+            let splitCoords = coordSet.split(',')
+            return [parseFloat(splitCoords[0]), parseFloat(splitCoords[1])]
+          })
+          return {
+            type : "Feature",
+            properties : polygon,
+            geometry : {
+              type : "Polygon",
+              coordinates : [ coordinates ]
+            }
+          }
+        })
+      }
+
+      console.log(polyFeatureCollection) // We're in business!
+
+      map.addSource('poly', {
+        type : "geojson",
+        data : polyFeatureCollection
+      })
+
+      map.addLayer({
+        id : "poly-fill",
+        source : 'poly',
+        type : 'fill'
+      })
+
+    }
+
+</script>
+
+</body>
+</html>

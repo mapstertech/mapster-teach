@@ -95,19 +95,19 @@
 				})
 
 				// Adding as circles
-				// map.addSource("locations", {
-				// 	type : "geojson",
-				// 	data : response
-				// })
-				//
-				// map.addLayer({
-				// 	id : "circle-locations",
-				// 	type : "circle",
-				// 	source : "locations",
-				// 	paint : {
-				// 		"circle-color" : "#FF0000"
-				// 	}
-				// })
+				map.addSource("locations", {
+					type : "geojson",
+					data : response
+				})
+
+				map.addLayer({
+					id : "circle-locations",
+					type : "circle",
+					source : "locations",
+					paint : {
+						"circle-color" : "#FF0000"
+					}
+				})
 
 			})
 		})

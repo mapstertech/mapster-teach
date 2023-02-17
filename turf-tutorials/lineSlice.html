@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js"></script>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  	mapboxgl.accessToken = 'pk.eyJ1IjoibWFwc3RlcnRlY2giLCJhIjoiY2w5bjZxYWcyMDB0ajN1bzdranRpeWJsaCJ9.U2iH1idT-YJNJlD-nKuQGg';
+    const map = new mapboxgl.Map({
+        container: 'map', // container ID
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/mapbox/streets-v12', // style URL
+        center: [-74.5, 40], // starting position [lng, lat]
+        zoom: 9 // starting zoom
+    });
+
+    map.on('load', () => {
+
+      fetch('https://api.mapbox.com/directions/v5/mapbox/driving/-123.113953%2C49.260872%3B-119.495902%2C49.887918?alternatives=true&geometries=geojson&language=en&overview=simplified&steps=true&access_token=pk.eyJ1IjoibWFwc3RlcnRlY2giLCJhIjoiY2w5bjZxYWcyMDB0ajN1bzdranRpeWJsaCJ9.U2iH1idT-YJNJlD-nKuQGg').then(resp => resp.json()).then(response => {
+        console.log(response)
+
+        // This is the rough route.
+        // Can get greater detail by adding each leg separately
+        const routeGeoJSON = {
+          type : "FeatureCollection",
+          features : [{
+            type : "Feature",
+            properties : {
+              distance : response.routes[0].distance,
+              duration : response.routes[0].duration
+            },
+            geometry : response.routes[0].geometry
+          }]
+        }
+
+        const legsGeoJSON = {
+          type : "FeatureCollection",
+          features : response.routes[0].legs[0].steps.map((step) => {
+            return {
+              type : "Feature",
+              properties : {
+                distance : step.distance
+              },
+              geometry : step.geometry
+            }
+          })
+        }
+
+        console.log(legsGeoJSON)
+
+        // Bbox zooming
+        const bbox = turf.bbox(routeGeoJSON)
+        map.fitBounds(bbox, { padding : 10, duration : 0 })
+
+        // Leg layout
+        map.addSource('leg-line', {
+          type : 'geojson',
+          data : legsGeoJSON
+        })
+
+        map.addLayer({
+          id : 'route-leg-layer',
+          source : 'leg-line',
+          type : 'line',
+          paint : {
+            'line-width' : 3,
+            'line-color' : '#0000FF'
+          }
+        })
+
+        // Route layout
+        map.addSource('route-line', {
+          type : 'geojson',
+          data : routeGeoJSON
+        })
+
+        map.addLayer({
+          id : 'route-line-layer',
+          source : 'route-line',
+          type : 'line',
+          paint : {
+            'line-width' : 3,
+            'line-color' : '#FF0000'
+          }
+        })
+
+        // Simulating a set of geolocated points
+        let geolocationPoints = []
+        for(let i=0; i<100; i++) {
+          const point = turf.along(routeGeoJSON.features[0], i)
+          geolocationPoints.push(point);
+        }
+
+        map.addSource('geolocation-points', {
+          type : 'geojson',
+          data : {
+            type : "FeatureCollection",
+            features : geolocationPoints
+          }
+        })
+
+        map.addLayer({
+          id : 'geolocation-circle-layer',
+          source : 'geolocation-points',
+          type : 'circle',
+          paint : {
+            'circle-radius' : 3,
+            'circle-color' : '#FFFFFF',
+            'circle-opacity' : 0.75
+          }
+        })
+
+
+      })
+
+    })
+</script>
+
+</body>
+</html>

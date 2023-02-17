@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Add dome in Mapbox GL JS using a hex grid and polygon extrusions</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoibmxhbWJlMiIsImEiOiJjazVubXJyM3IweDRwM25wNndlbWhjc3U5In0.4y-pp1CsRG42pY_h5xTdcA';
+var startingPoint = [ 151.1745, -33.9411 ];
+var directionalPoint = [ 151.17435336112976, -33.94063633939664 ]
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v9',
+    center: startingPoint,
+    zoom: 13,
+    pitch: 60
+});
+
+let startToDirectionalDistance = turf.distance(startingPoint, directionalPoint);
+let startToDirectionalAngle = turf.bearing(startingPoint, directionalPoint);
+
+// Body
+let bodyCorner1 = turf.destination(startingPoint, startToDirectionalDistance/2, startToDirectionalAngle+135);
+let bodyCorner2 = turf.destination(startingPoint, startToDirectionalDistance/2, startToDirectionalAngle-135);
+let bodyCorner3 = turf.destination(directionalPoint, startToDirectionalDistance/2, startToDirectionalAngle-45);
+let bodyCorner4 = turf.destination(directionalPoint, startToDirectionalDistance/2, startToDirectionalAngle+45);
+let bodyRectangle = { type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 10,
+    top_height : 20,
+    color : "#1AA7EC"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      bodyCorner1.geometry.coordinates,
+      bodyCorner2.geometry.coordinates,
+      bodyCorner3.geometry.coordinates,
+      bodyCorner4.geometry.coordinates,
+      bodyCorner1.geometry.coordinates
+    ]]
+  }
+}]}
+let bodyBottomRectangle = { type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 5,
+    top_height : 10,
+    color : "#0f648d"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      bodyCorner1.geometry.coordinates,
+      bodyCorner2.geometry.coordinates,
+      bodyCorner3.geometry.coordinates,
+      bodyCorner4.geometry.coordinates,
+      bodyCorner1.geometry.coordinates
+    ]]
+  }
+}]}
+let bodyStripe1 = turf.destination(bodyCorner1, startToDirectionalDistance/4, startToDirectionalAngle-90);
+let bodyStripe2 = turf.destination(bodyCorner2, startToDirectionalDistance/4, startToDirectionalAngle+90);
+let bodyStripe3 = turf.destination(bodyCorner3, startToDirectionalDistance/4, startToDirectionalAngle+90);
+let bodyStripe4 = turf.destination(bodyCorner4, startToDirectionalDistance/4, startToDirectionalAngle-90);
+let bodyStripeRectangle = turf.buffer({ type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 5,
+    top_height : 20.2,
+    color : "#0f648d"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      bodyStripe1.geometry.coordinates,
+      bodyStripe2.geometry.coordinates,
+      bodyStripe3.geometry.coordinates,
+      bodyStripe4.geometry.coordinates,
+      bodyStripe1.geometry.coordinates
+    ]]
+  }
+}]}, 0.0002);
+
+// Roof
+let roofCorner1 = turf.destination(startingPoint, startToDirectionalDistance/4, startToDirectionalAngle+70);
+let roofCorner2 = turf.destination(startingPoint, startToDirectionalDistance/4, startToDirectionalAngle-70);
+let roofCorner3 = turf.destination(directionalPoint, startToDirectionalDistance/4, startToDirectionalAngle-70);
+let roofCorner4 = turf.destination(directionalPoint, startToDirectionalDistance/4, startToDirectionalAngle+70);
+let roofRectangle = { type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 20,
+    top_height : 33,
+    color : "#FFFFFF"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      roofCorner1.geometry.coordinates,
+      roofCorner2.geometry.coordinates,
+      roofCorner3.geometry.coordinates,
+      roofCorner4.geometry.coordinates,
+      roofCorner1.geometry.coordinates
+    ]]
+  }
+}]}
+let driverWindow1 = turf.destination(roofCorner1, startToDirectionalDistance/8, startToDirectionalAngle);
+let driverWindow2 = turf.destination(roofCorner2, startToDirectionalDistance/8, startToDirectionalAngle);
+let driverWindow3 = turf.destination(roofCorner2, startToDirectionalDistance/4, startToDirectionalAngle);
+let driverWindow4 = turf.destination(roofCorner1, startToDirectionalDistance/4, startToDirectionalAngle);
+let driverWindowRectangle = turf.buffer({ type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 20,
+    top_height : 28,
+    color : "#000000"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      driverWindow1.geometry.coordinates,
+      driverWindow2.geometry.coordinates,
+      driverWindow3.geometry.coordinates,
+      driverWindow4.geometry.coordinates,
+      driverWindow1.geometry.coordinates
+    ]]
+  }
+}]}, 0.0002);
+let frontWindow1 = turf.destination(roofCorner1, startToDirectionalDistance/10, startToDirectionalAngle-90);
+let frontWindow2 = turf.destination(roofCorner2, startToDirectionalDistance/10, startToDirectionalAngle+90);
+let frontWindow3 = turf.destination(roofCorner3, startToDirectionalDistance/10, startToDirectionalAngle+90);
+let frontWindow4 = turf.destination(roofCorner4, startToDirectionalDistance/10, startToDirectionalAngle-90);
+let frontWindowRectangle = turf.buffer({ type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 20,
+    top_height : 28,
+    color : "#000000"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      frontWindow1.geometry.coordinates,
+      frontWindow2.geometry.coordinates,
+      frontWindow3.geometry.coordinates,
+      frontWindow4.geometry.coordinates,
+      frontWindow1.geometry.coordinates
+    ]]
+  }
+}]}, 0.0002);
+let backWindow1 = turf.destination(roofCorner1, startToDirectionalDistance/2.5, startToDirectionalAngle);
+let backWindow2 = turf.destination(roofCorner2, startToDirectionalDistance/2.5, startToDirectionalAngle);
+let backWindow3 = turf.destination(roofCorner2, startToDirectionalDistance/1.2, startToDirectionalAngle);
+let backWindow4 = turf.destination(roofCorner1, startToDirectionalDistance/1.2, startToDirectionalAngle);
+let backWindowRectangle = turf.buffer({ type : "FeatureCollection", features : [{
+  type : "Feature",
+  properties : {
+    base_height : 20,
+    top_height : 28,
+    color : "#000000"
+  },
+  geometry : {
+    type : "Polygon",
+    coordinates : [[
+      backWindow1.geometry.coordinates,
+      backWindow2.geometry.coordinates,
+      backWindow3.geometry.coordinates,
+      backWindow4.geometry.coordinates,
+      backWindow1.geometry.coordinates
+    ]]
+  }
+}]}, 0.0002);
+
+// Tires and accessories
+let bodyToLine = turf.polygonToLine(bodyRectangle.features[0]);
+let bodyAsLineLength = turf.length(bodyToLine);
+
+let headlightStart1 = turf.along(bodyToLine, bodyAsLineLength*0.02);
+let headlightEnd1 = turf.along(bodyToLine, bodyAsLineLength*0.04);
+let headlightStart2 = turf.along(bodyToLine, bodyAsLineLength*0.105);
+let headlightEnd2 = turf.along(bodyToLine, bodyAsLineLength*0.125);
+
+let headlightStarters = [headlightStart1, headlightStart2]
+let headlightEnders = [headlightEnd1, headlightEnd2]
+
+let headlightPolygons = [];
+headlightStarters.forEach((headlightStarter, index) => {
+  let headlightDistance = turf.distance(headlightStarter, headlightEnders[index]);
+  let headlightAngle = turf.bearing(headlightStarter, headlightEnders[index]);
+  let headlightPoint1 = turf.destination(headlightStarter, headlightDistance/30, headlightAngle-90);
+  let headlightPoint2 = turf.destination(headlightEnders[index], headlightDistance/30, headlightAngle-90);
+  let headlightPoint3 = turf.destination(headlightEnders[index], headlightDistance/2, headlightAngle+90);
+  let headlightPoint4 = turf.destination(headlightStarter, headlightDistance/2, headlightAngle+90);
+  headlightPolygons.push({
+    type : "Feature",
+    properties : {
+      base_height : 10,
+      top_height : 10 + (headlightDistance * 1000),
+      color : "#FFBF00"
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        headlightPoint1.geometry.coordinates,
+        headlightPoint2.geometry.coordinates,
+        headlightPoint3.geometry.coordinates,
+        headlightPoint4.geometry.coordinates,
+        headlightPoint1.geometry.coordinates
+      ]]
+    }
+  })
+})
+
+
+let tireStart1 = turf.along(bodyToLine, bodyAsLineLength*0.20);
+let tireEnd1 = turf.along(bodyToLine, bodyAsLineLength*0.24);
+let tireStart2 = turf.along(bodyToLine, bodyAsLineLength*0.4);
+let tireEnd2 = turf.along(bodyToLine, bodyAsLineLength*0.44);
+let tireStart3 = turf.along(bodyToLine, bodyAsLineLength*0.71);
+let tireEnd3 = turf.along(bodyToLine, bodyAsLineLength*0.75);
+let tireStart4 = turf.along(bodyToLine, bodyAsLineLength*0.91);
+let tireEnd4 = turf.along(bodyToLine, bodyAsLineLength*0.95);
+
+let tiresStarters = [tireStart1, tireStart2, tireStart3, tireStart4]
+let tiresEnders = [tireEnd1, tireEnd2, tireEnd3, tireEnd4]
+
+let tirePolygons = [];
+tiresStarters.forEach((tireStarter, index) => {
+  let tireDistance = turf.distance(tireStarter, tiresEnders[index]);
+  let tireAngle = turf.bearing(tireStarter, tiresEnders[index]);
+  let tirePoint1 = turf.destination(tireStarter, tireDistance/100, tireAngle-90);
+  let tirePoint2 = turf.destination(tiresEnders[index], tireDistance/100, tireAngle-90);
+  let tirePoint3 = turf.destination(tiresEnders[index], tireDistance/2, tireAngle+90);
+  let tirePoint4 = turf.destination(tireStarter, tireDistance/2, tireAngle+90);
+  tirePolygons.push({
+    type : "Feature",
+    properties : {
+      base_height : 0,
+      top_height : tireDistance * 1000,
+      color : "#000000"
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        tirePoint1.geometry.coordinates,
+        tirePoint2.geometry.coordinates,
+        tirePoint3.geometry.coordinates,
+        tirePoint4.geometry.coordinates,
+        tirePoint1.geometry.coordinates
+      ]]
+    }
+  })
+})
+let tireCenterPolygons = [];
+tiresStarters.forEach((tireStarter, index) => {
+  let tireDistance = turf.distance(tireStarter, tiresEnders[index]);
+  let tireAngle = turf.bearing(tireStarter, tiresEnders[index]);
+  let tirePoint1 = turf.destination(tireStarter, tireDistance*0.25, tireAngle);
+  let tirePoint2 = turf.destination(tireStarter, tireDistance*0.75, tireAngle);
+  let tirePoint3 = turf.destination(tirePoint2, tireDistance/30, tireAngle-90);
+  let tirePoint4 = turf.destination(tirePoint1, tireDistance/30, tireAngle-90);
+  tireCenterPolygons.push({
+    type : "Feature",
+    properties : {
+      base_height : tireDistance * 1000 * 0.333,
+      top_height : tireDistance * 1000 * 0.666,
+      color : "#FFFFFF"
+    },
+    geometry : {
+      type : "Polygon",
+      coordinates : [[
+        tirePoint1.geometry.coordinates,
+        tirePoint2.geometry.coordinates,
+        tirePoint3.geometry.coordinates,
+        tirePoint4.geometry.coordinates,
+        tirePoint1.geometry.coordinates
+      ]]
+    }
+  })
+});
+
+let carPolygons = { type : "FeatureCollection", features :
+  tirePolygons.concat(
+    headlightPolygons.concat(
+      tireCenterPolygons.concat(
+        bodyRectangle.features.concat(
+          bodyBottomRectangle.features.concat(
+            bodyStripeRectangle.features.concat(
+              driverWindowRectangle.features.concat(
+                frontWindowRectangle.features.concat(
+                  backWindowRectangle.features.concat(
+                    roofRectangle.features
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+}
+
+// carPolygons.features.push({ type : "Feature", properties : {}, geometry : { type : "Point", coordinates : startingPoint }})
+// carPolygons.features.push({ type : "Feature", properties : {}, geometry : { type : "Point", coordinates : directionalPoint }})
+// let tires = { type : "FeatureCollection", features : [
+//   tireStart1, tireEnd1, tireStart2, tireEnd2,
+//   tireStart3, tireEnd3, tireStart4, tireEnd4,
+//   bodyRectangle.features[0]
+// ]};
+console.log(carPolygons)
+// Need to create tires just before the four corners
+// Need to create a Roof section for the car sitting on top of the body
+// Small door handles possibly
+
+
+
+map.on('load', function () {
+	map.addSource('dome', {
+		type: 'geojson',
+		data: carPolygons
+	});
+
+	map.addLayer({
+		id: 'dome',
+		type: 'fill-extrusion',
+		source: 'dome',
+		layout: {},
+		paint: {
+			'fill-extrusion-color': {
+				type: 'identity',
+				property: 'color'
+			},
+			'fill-extrusion-base': {
+				type: 'identity',
+				property: 'base_height'
+			},
+			'fill-extrusion-height': {
+				type: 'identity',
+				property: 'top_height'
+			},
+			'fill-extrusion-opacity': 1
+		}
+	});
+});
+</script>
+
+</body>
+</html>
