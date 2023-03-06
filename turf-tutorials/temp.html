@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js"></script>
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+		const bigSquare = {
+		  "type": "FeatureCollection",
+		  "features": [
+		    {
+		      "type": "Feature",
+		      "properties": {},
+		      "geometry": {
+		        "coordinates": [
+		          [
+		            [
+		              -30.08870049756294,
+		              46.07462245253191
+		            ],
+		            [
+		              -30.08870049756294,
+		              -28.765900414884378
+		            ],
+		            [
+		              71.1612995024374,
+		              -28.765900414884378
+		            ],
+		            [
+		              71.1612995024374,
+		              46.07462245253191
+		            ],
+		            [
+		              -30.08870049756294,
+		              46.07462245253191
+		            ]
+		          ]
+		        ],
+		        "type": "Polygon"
+		      }
+		    }
+		  ]
+		};
+
+		const bbox = turf.bbox(bigSquare)
+
+		let points = { type : "FeatureCollection", features : [] }
+
+		for(let i = 0; i < 100; i++) {
+			let point = turf.randomPosition(bbox)
+			points.features.push({
+				type : "Feature",
+				properties : {},
+				geometry : {
+					type : "Point",
+					coordinates : point
+				}
+			})
+		}
+		console.log(points)
+
+</script>
+
+</body>
+</html>

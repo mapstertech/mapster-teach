@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+  var map = new maplibregl.Map({
+    container: 'map', // container id
+    style: 'https://demotiles.maplibre.org/style.json', // style URL
+    center: [0, 0], // starting position [lng, lat]
+    zoom: 1 // starting zoom
+  });
+
+  // Measuring random polygons
+  let randomPolys = turf.randomPolygon(5)
+
+  randomPolys.features.forEach(feature => {
+    console.log(turf.area(feature))
+  })
+
+
+  // We can't just go ahead and use a normal geographic area!
+  // So we do a couple of steps to find the answer with Turf instead
+  // https://geojson.io/
+  // https://turfjs.org/docs/#area
+  // https://math.stackexchange.com/questions/1832110/area-of-a-circle-on-sphere
+  // https://gis.stackexchange.com/questions/395771/calculate-the-area-of-a-polygon-on-the-surface-of-the-earth
+
+  const nullIslandCoordinates = [ 0, 0 ]
+  const yellowknifeCoordinates = [ -114.38040216350421, 62.457992703678656 ]
+  const radius = 50; // km
+
+  const turfCircleNI = turf.circle(nullIslandCoordinates, radius)
+  const turfCircleYK = turf.circle(yellowknifeCoordinates, radius)
+
+  // A = (PI * r)^2 in plain math
+  // But this doesn't work for geography!
+
+  const radiusInSquareMeters = radius * 1000;
+  const piArea = Math.PI * (radiusInSquareMeters * radiusInSquareMeters) // square km
+  const turfAreaNI = turf.area(turfCircleNI) // square meters
+  const turfAreaYK = turf.area(turfCircleYK) // square meters
+
+  const piAreaSqKM = piArea/(1000*1000);
+  const turfAreaNISqKM = turfAreaNI/(1000*1000)
+  const turfAreaYKSqKM = turfAreaYK/(1000*1000)
+
+  console.log(piAreaSqKM, turfAreaNISqKM, turfAreaYKSqKM)
+
+  map.on('load', () => {
+    map.addSource("poly-fill", {
+      type : 'geojson',
+      data : randomPolys
+    })
+
+    map.addLayer({
+      id : 'poly-fill',
+      source : 'poly-fill',
+      type : 'fill',
+      paint : {
+        'fill-color' : '#333',
+        'fill-opacity' : 1
+      }
+    })
+    // map.addSource("circle-fill-ni", {
+    //   type : 'geojson',
+    //   data : turfCircleNI
+    // })
+    //
+    // map.addLayer({
+    //   id : 'circle-fill-ni',
+    //   source : 'circle-fill-ni',
+    //   type : 'fill',
+    //   paint : {
+    //     'fill-color' : '#333',
+    //     'fill-opacity' : 0.2
+    //   }
+    // })
+    // map.addSource("circle-fill-yk", {
+    //   type : 'geojson',
+    //   data : turfCircleYK
+    // })
+    //
+    // map.addLayer({
+    //   id : 'circle-fill-yk',
+    //   source : 'circle-fill-yk',
+    //   type : 'fill',
+    //   paint : {
+    //     'fill-color' : '#333',
+    //     'fill-opacity' : 0.2
+    //   }
+    // })
+  })
+
+</script>
+
+</body>
+</html>
