@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Google Maps Heatmap Cell</title>
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			position: absolute;
+      top : 0;
+      bottom : 0;
+      width: 100%;
+		}
+	</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+	function initMap() {
+		const map = new google.maps.Map(document.getElementById("map"), {
+	    zoom: 4,
+	    center: { lat: 50, lng : -120 },
+	  });
+
+
+  	google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+
+		  fetch('./../earthquake-data.geojson').then(resp => resp.json()).then(earthquakeData => {
+
+				const googleMapsPoints = earthquakeData.features.map(feature => {
+					return new google.maps.LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0])
+				})
+
+				// Include visualization library query string loading JS
+				// https://developers.google.com/maps/documentation/javascript/heatmaplayer
+				// https://developers.google.com/maps/documentation/javascript/reference/visualization
+				var heatmap = new google.maps.visualization.HeatmapLayer({
+				  data: googleMapsPoints,
+					dissipating : true,
+					radius : 30
+				});
+				heatmap.setMap(map);
+
+		  });
+		});
+	}
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap&libraries=visualization" defer></script>
+
+</body>
+</html>

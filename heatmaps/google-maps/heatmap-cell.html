@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Google Maps Heatmap Cell</title>
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+	<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+  <script src="./color-interpolate.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			position: absolute;
+      top : 0;
+      bottom : 0;
+      width: 100%;
+		}
+	</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+	function initMap() {
+		const map = new google.maps.Map(document.getElementById("map"), {
+	    zoom: 4,
+	    center: { lat: 50, lng : -120 },
+	  });
+
+
+  	google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+
+		  fetch('./../earthquake-data.geojson').then(resp => resp.json()).then(earthquakeData => {
+
+		    const currentBounds = map.getBounds();
+		    // Need to format bounds to fit Turf
+				console.log(currentBounds.getNorthEast().lng(), currentBounds.getNorthEast().lat(), currentBounds.getSouthWest().lng(), currentBounds.getSouthWest().lat())
+		    const hexGrid = turf.hexGrid([
+		      currentBounds.getNorthEast().lng(), currentBounds.getNorthEast().lat(), currentBounds.getSouthWest().lng() - 360, currentBounds.getSouthWest().lat()
+		    ], 100)
+
+				console.log(hexGrid)
+
+		    let min = 0
+		    let max = 0
+		    let maxIntensity = 0
+		    hexGrid.features.forEach(feature => {
+		      const pointsInThisFeature = turf.pointsWithinPolygon(earthquakeData, feature)
+		      feature.properties.earthquakeNumber = pointsInThisFeature.features.length
+		      feature.properties.earthquakeIntensity = pointsInThisFeature.features.reduce((a, b) => a + b.properties.mag, 0)
+		      // Just counting total number of earthquake in each cell
+		      if(feature.properties.earthquakeNumber > max) {
+		        max = pointsInThisFeature.features.length
+		      }
+		      // Dumb intensity accumulation, could be smarter! But you get the idea.
+		      if(feature.properties.earthquakeIntensity > maxIntensity) {
+		        maxIntensity = feature.properties.earthquakeIntensity
+		      }
+
+		      // Could run this function dynamically as the user zooms in for greater detail
+		      // Or as a user drags a timeslider, etc
+		    })
+
+
+		    // We run this after we've done the calculations, so we know the max and min accurately
+		    // Using color-interpolate browserified
+		    let colormap = window.color_interpolate(['rgba(33,102,172,0)', 'rgb(103,169,207)', 'rgb(209,229,240)', 'rgb(253,219,199)', 'rgb(239,138,98)', 'rgb(178,24,43)']);
+
+				map.data.addGeoJson(hexGrid)
+				map.data.setStyle(function(feature) {
+					let thisColor = colormap(feature.getProperty('earthquakeNumber') / max);
+					return {
+						fillColor : thisColor,
+						strokeWeight : 0.1
+					}
+				})
+
+
+		  });
+		});
+	}
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" defer></script>
+
+
+
+</body>
+</html>

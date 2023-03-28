@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display a map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+    /*
+
+    https://turfjs.org/docs
+    https://geojson.io/
+    https://wiki.openstreetmap.org/wiki/Bounding_Box
+    https://codepen.io/bothness/pen/ExgwzEG
+
+    */
+
+
+    // https://codepen.io/bothness/pen/ExgwzEG
+    const style = {
+      "version": 8,
+      "sources": {
+        "osm": {
+          "type": "raster",
+          "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          "tileSize": 256,
+          "attribution": "&copy; OpenStreetMap Contributors",
+          "maxzoom": 19
+        }
+      },
+      "layers": [
+        {
+          "id": "osm",
+          "type": "raster",
+          "source": "osm" // This must match the source key above
+        }
+      ]
+    };
+
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style : style,
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+    map.on("load", () => {
+
+      const featureCollection = {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "properties": {},
+              "geometry": {
+                "coordinates": [
+                  -123.04268320769302,
+                  49.27164797517841
+                ],
+                "type": "Point"
+              }
+            },
+            {
+              "type": "Feature",
+              "properties": {},
+              "geometry": {
+                "coordinates": [
+                  [
+                    -122.91631361764735,
+                    49.255559165256756
+                  ],
+                  [
+                    -122.55816053510384,
+                    49.164987850542616
+                  ],
+                  [
+                    -122.36753066858859,
+                    49.051540309412474
+                  ],
+                  [
+                    -122.02670757390993,
+                    49.123420536742515
+                  ],
+                  [
+                    -121.61078786514939,
+                    49.3271438044078
+                  ],
+                  [
+                    -121.39127468552596,
+                    49.391105122570025
+                  ],
+                  [
+                    -120.77317178500715,
+                    50.06695400081773
+                  ],
+                  [
+                    -120.59987190635707,
+                    49.974164563687395
+                  ],
+                  [
+                    -120.50744530441003,
+                    49.88119585912676
+                  ],
+                  [
+                    -119.81424578980969,
+                    49.88491805051757
+                  ],
+                  [
+                    -119.47919935775253,
+                    49.87747338074604
+                  ]
+                ],
+                "type": "LineString"
+              }
+            }
+          ]
+        };
+
+        const bbox = turf.bbox(featureCollection);
+
+        console.log(bbox);
+        console.log(map.getBounds());
+
+        map.fitBounds(bbox, { padding: 50, duration : 500 })
+
+        const bboxPolygon = turf.bboxPolygon(bbox)
+
+        map.addSource('bbox-poly', {
+          type : "geojson",
+          data : bboxPolygon
+        })
+        map.addLayer({
+          id : "bbox-poly",
+          type : "fill",
+          source : "bbox-poly",
+          paint : {
+            "fill-opacity" : 0.1
+          }
+        })
+
+        // Now I can use other turf functions with this! Like:
+
+        // turf.buffer()
+
+        // const bufferedBbox = turf.buffer(bboxPolygon, 100)
+        //
+        // map.addSource('buffer-bbox-poly', {
+        //   type : "geojson",
+        //   data : bufferedBbox
+        // })
+        // map.addLayer({
+        //   id : "buffer-bbox-poly",
+        //   type : "fill",
+        //   source : "buffer-bbox-poly",
+        //   paint : {
+        //     "fill-opacity" : 0.5,
+        //     "fill-color" : "white"
+        //   }
+        // })
+        //
+        // const bufferedBboxBounds = turf.bbox(bufferedBbox);
+        // map.fitBounds(bufferedBboxBounds, { padding: 50, duration : 500 })
+
+        // turf.hexGrid()
+
+        const hexGrid = turf.hexGrid(bbox, 1)
+
+        map.addSource('hexgrid-bbox-poly', {
+          type : "geojson",
+          data : hexGrid
+        })
+        map.addLayer({
+          id : "hexgrid-bbox-poly",
+          type : "fill",
+          source : "hexgrid-bbox-poly",
+          paint : {
+            "fill-opacity" : 0.5,
+            "fill-color" : "white"
+          }
+        })
+
+        // turf.pointsWithinPolygon()
+        // turf.booleanIntersects()
+    })
+
+
+</script>
+
+</body>
+</html>

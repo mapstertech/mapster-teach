@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Cell Heatmap - Weighted and Count</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [-120, 50],
+        zoom: 3
+    });
+
+    map.on('load', () => {
+      fetch('./../earthquake-data.geojson').then(resp => resp.json()).then(earthquakeData => {
+
+        const currentBounds = map.getBounds();
+        console.log(currentBounds)
+        // Need to format bounds to fit Turf
+        const hexGrid = turf.hexGrid([
+          currentBounds._ne.lng, currentBounds._ne.lat, currentBounds._sw.lng, currentBounds._sw.lat
+        ], 100)
+
+        let min = 0
+        let max = 0
+        let maxIntensity = 0
+        hexGrid.features.forEach(feature => {
+          const pointsInThisFeature = turf.pointsWithinPolygon(earthquakeData, feature)
+          console.log(pointsInThisFeature)
+          feature.properties.earthquakeNumber = pointsInThisFeature.features.length
+          feature.properties.earthquakeIntensity = pointsInThisFeature.features.reduce((a, b) => a + b.properties.mag, 0)
+          // Just counting total number of earthquake in each cell
+          if(feature.properties.earthquakeNumber > max) {
+            max = pointsInThisFeature.features.length
+          }
+          // Dumb intensity accumulation, could be smarter! But you get the idea.
+          if(feature.properties.earthquakeIntensity > maxIntensity) {
+            maxIntensity = feature.properties.earthquakeIntensity
+          }
+
+          // Could run this function dynamically as the user zooms in for greater detail
+          // Or as a user drags a timeslider, etc
+        })
+
+        map.addSource("hex-grid", {
+          type : 'geojson',
+          data : hexGrid
+        })
+
+        map.addLayer({
+          id : "hex-grid-fill",
+          type : "fill",
+          source : "hex-grid",
+          paint : {
+            'fill-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'earthquakeNumber'],
+                min,
+                'rgba(33,102,172,0)',
+                max * 0.2,
+                'rgb(103,169,207)',
+                max * 0.4,
+                'rgb(209,229,240)',
+                max * 0.6,
+                'rgb(253,219,199)',
+                max * 0.8,
+                'rgb(239,138,98)',
+                max,
+                'rgb(178,24,43)'
+            ],
+          }
+        })
+
+        // map.addLayer({
+        //   id : "hex-grid-fill",
+        //   type : "fill",
+        //   source : "hex-grid",
+        //   paint : {
+        //     'fill-color': [
+        //         'interpolate',
+        //         ['linear'],
+        //         ['get', 'earthquakeIntensity'],
+        //         min,
+        //         'rgba(33,102,172,0)',
+        //         maxIntensity * 0.2,
+        //         'rgb(103,169,207)',
+        //         maxIntensity * 0.4,
+        //         'rgb(209,229,240)',
+        //         maxIntensity * 0.6,
+        //         'rgb(253,219,199)',
+        //         maxIntensity * 0.8,
+        //         'rgb(239,138,98)',
+        //         maxIntensity,
+        //         'rgb(178,24,43)'
+        //     ],
+        //   }
+        // })
+
+      })
+    })
+</script>
+
+</body>
+</html>

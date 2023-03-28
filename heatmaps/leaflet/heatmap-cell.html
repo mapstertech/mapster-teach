@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Leaflet Heatmap Cell</title>
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+  <script src="./color-interpolate.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			position: absolute;
+      top : 0;
+      bottom : 0;
+      width: 100%;
+		}
+	</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+
+	const map = L.map('map').setView([50, -120], 4);
+
+	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+  fetch('./../earthquake-data.geojson').then(resp => resp.json()).then(earthquakeData => {
+
+    const currentBounds = map.getBounds();
+    console.log(currentBounds)
+    // Need to format bounds to fit Turf
+    const hexGrid = turf.hexGrid([
+      currentBounds._northEast.lng, currentBounds._northEast.lat, currentBounds._southWest.lng, currentBounds._southWest.lat
+    ], 100)
+
+    let min = 0
+    let max = 0
+    let maxIntensity = 0
+    hexGrid.features.forEach(feature => {
+      const pointsInThisFeature = turf.pointsWithinPolygon(earthquakeData, feature)
+      feature.properties.earthquakeNumber = pointsInThisFeature.features.length
+      feature.properties.earthquakeIntensity = pointsInThisFeature.features.reduce((a, b) => a + b.properties.mag, 0)
+      // Just counting total number of earthquake in each cell
+      if(feature.properties.earthquakeNumber > max) {
+        max = pointsInThisFeature.features.length
+      }
+      // Dumb intensity accumulation, could be smarter! But you get the idea.
+      if(feature.properties.earthquakeIntensity > maxIntensity) {
+        maxIntensity = feature.properties.earthquakeIntensity
+      }
+
+      // Could run this function dynamically as the user zooms in for greater detail
+      // Or as a user drags a timeslider, etc
+    })
+
+
+    // We run this after we've done the calculations, so we know the max and min accurately
+    // Using color-interpolate browserified
+    let colormap = window.color_interpolate(['rgba(33,102,172,0)', 'rgb(103,169,207)', 'rgb(209,229,240)', 'rgb(253,219,199)', 'rgb(239,138,98)', 'rgb(178,24,43)']);
+    L.geoJSON(hexGrid, {
+      style : (feature) => {
+        let thisColor = colormap(feature.properties.earthquakeNumber / max);
+        return {
+          color : thisColor
+        }
+      }
+    }).addTo(map)
+  });
+
+</script>
+
+
+
+</body>
+</html>
