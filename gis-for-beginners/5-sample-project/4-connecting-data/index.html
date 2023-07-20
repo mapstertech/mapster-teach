@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>McDonald's Per State</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+		// We make a variable to hold the spreadsheet information once we get it
+		let mcdonaldsInformation = false;
+
+		var popup = new maplibregl.Popup({ closeOnClick: false })
+
+		map.on('load', () => {
+
+			// These won't necessarily run or finish in order, so you have to keep that in mind!
+			fetch('./mcdonalds-per-state.json').then(response => response.json()).then(response => {
+				console.log("MCDONALDS");
+				console.log(response)
+				mcdonaldsInformation = response;
+			})
+
+			fetch('./us-states.json').then(response => response.json()).then(response => {
+				console.log(response);
+				map.addSource("states", {
+					type : "geojson",
+					data : response
+				})
+				// We can add lines AND polygons using the same source!
+				// Add them in the order we want them to appear
+				map.addLayer({
+					id : "states-fill-layer",
+					type : "fill",
+					source : "states",
+					paint : {
+						"fill-opacity" : 0.5,
+						"fill-color" : "#00FF00"
+					}
+				})
+				map.addLayer({
+					id : "states-line-layer",
+					type : "line",
+					source : "states",
+					paint : {
+						"line-opacity" : 0.5,
+						"line-color" : "#000000"
+					}
+				})
+
+				// Doing the bounds stuff to have a nice zoom
+				let bounds = turf.bbox(response);
+				map.fitBounds(bounds)
+
+				map.on('click', 'states-fill-layer', function(e) {
+					const clickedFeatures = map.queryRenderedFeatures(e.point, { layers : ['states-fill-layer']} )
+					console.log(clickedFeatures)
+
+					// Now here we can "loop" over the spreadsheet data to find the one that has the same name as the clicked state
+					let clickedStateName = clickedFeatures[0].properties.name;
+					let numberOfMcdonalds = 0;
+					mcdonaldsInformation.forEach(function(thisMcdonalds) {
+							if(thisMcdonalds.STATE === clickedStateName) {
+								numberOfMcdonalds = thisMcdonalds["Number of McDonald's"]; // We have to refer to it in this way because it's got a weird name with spaces and stuff
+							}
+					})
+
+					popup.setLngLat(e.lngLat).setHTML(
+						`You clicked ${clickedStateName}, which has ${numberOfMcdonalds} McDonald's!`
+					).addTo(map)
+				})
+			})
+
+		})
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Autocomplete Leaflet example</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/tomickigrzegorz/autocomplete@1.8.6/dist/css/autocomplete.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/gh/tomickigrzegorz/autocomplete@1.8.6/dist/js/autocomplete.min.js"></script>
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Lato&display=swap);
+
+      :root {
+        --icon-place: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 0C10.477 0 6 4.477 6 10c0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16a6 6 0 110-12 6 6 0 010 12z'/%3E%3C/svg%3E");
+      }
+
+      *,
+      :after,
+      :before {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+      }
+
+      html,
+      #map {
+        height: 100%;
+      }
+
+      body,
+      html,
+      #map {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        margin: 0 -15px;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: Lato, sans-serif;
+        min-height: 100%;
+        background: #ebebeb;
+        padding: 0 15px;
+      }
+
+      h1 {
+        letter-spacing: 1px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 400px;
+        margin: 20px auto;
+      }
+
+      .auto-search-wrapper {
+        margin: 10px auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- search container -->
+    <div class="container">
+      <div class="row">
+        <h4>AUTOCOMPLETE + GEOCODING</h4>
+        <div class="auto-search-wrapper loupe">
+          <input
+            type="text"
+            autocomplete="off"
+            id="search"
+            class="full-width"
+            placeholder="enter the city name"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- map -->
+    <div id="map"></div>
+
+    <script>
+      // MAP PART
+      const config = {
+        minZoom: 4,
+        maxZoom: 18,
+      };
+      // magnification with which the map will start
+      const zoom = 3;
+      // coordinates
+      const lat = 52.22977;
+      const lng = 21.01178;
+
+      // calling map
+      const map = L.map("map", config).setView([lat, lng], zoom);
+
+      // Used to load and display tile layers on the map
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+
+      new Autocomplete("search", {
+        selectFirst: true,
+        insertToInput: true,
+        cache: true,
+        howManyCharacters: 2,
+        // onSearch
+        onSearch: ({ currentValue }) => {
+          // api
+          const api = `https://nominatim.openstreetmap.org/search?format=geojson&limit=5&city=${encodeURI(
+            currentValue
+          )}`;
+          return new Promise((resolve) => {
+            fetch(api)
+              .then((response) => response.json())
+              .then((data) => {
+                resolve(data.features);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+          });
+        },
+
+        // nominatim GeoJSON format
+        onResults: ({ currentValue, matches, template }) => {
+          const regex = new RegExp(currentValue, "gi");
+
+          // if the result returns 0 we
+          // show the no results element
+          return matches === 0
+            ? template
+            : matches
+                .map((element) => {
+                  return `
+                      <li>
+                        <p>
+                          ${element.properties.display_name.replace(
+                            regex,
+                            (str) => `<b>${str}</b>`
+                          )}
+                        </p>
+                      </li> `;
+                })
+                .join("");
+        },
+
+        onSubmit: ({ object }) => {
+          // remove all layers from the map
+          map.eachLayer(function (layer) {
+            if (!!layer.toGeoJSON) {
+              map.removeLayer(layer);
+            }
+          });
+
+          const { display_name } = object.properties;
+          const [lng, lat] = object.geometry.coordinates;
+          // custom id for marker
+
+          const marker = L.marker([lat, lng], {
+            title: display_name,
+          });
+
+          marker.addTo(map).bindPopup(display_name);
+
+          map.setView([lat, lng], 8);
+        },
+
+        // get index and data from li element after
+        // hovering over li with the mouse or using
+        // arrow keys ↓ | ↑
+        onSelectedItem: ({ index, element, object }) => {
+          console.log("onSelectedItem:", { index, element, object });
+        },
+
+        // the method presents no results
+        // no results
+        noResults: ({ currentValue, template }) =>
+          template(`<li>No results found: "${currentValue}"</li>`),
+        });
+
+        // --------------------------------------------------
+
+    </script>
+  </body>
+</html>

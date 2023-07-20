@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display a naked map</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	// https://github.com/mapbox/mapbox-gl-styles/blob/master/styles/empty-v8.json
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: {
+          "version": 8,
+          "name": "Empty",
+          "sources": {},
+          "layers": [
+            {
+              "id": "background",
+              "type": "background",
+              "paint": {
+                "background-color": "rgba(0,0,0,0)"
+              }
+            }
+          ]
+        }, // style URL
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+    map.on('load', () => {
+      const sampleGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+              "coordinates": [
+                [
+                  [
+                    -34.660801803606944,
+                    49.726717540142374
+                  ],
+                  [
+                    -58.021790514088465,
+                    43.67976649643131
+                  ],
+                  [
+                    -50.294387003921145,
+                    40.19975243734734
+                  ],
+                  [
+                    -38.45260835516865,
+                    45.11834373302628
+                  ],
+                  [
+                    -34.660801803606944,
+                    49.726717540142374
+                  ]
+                ]
+              ],
+              "type": "Polygon"
+            }
+          }
+        ]
+      };
+
+      map.addSource("poly", {
+        type : "geojson",
+        data : sampleGeoJSON
+      })
+
+      map.addLayer({
+        id : "poly-layer",
+        source : "poly",
+        type : "fill"
+      })
+    })
+
+</script>
+
+</body>
+</html>

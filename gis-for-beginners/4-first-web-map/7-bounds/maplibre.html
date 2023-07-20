@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display dynamic popups</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map',
+        style:
+            'https://api.maptiler.com/maps/basic-v2/style.json?key=mkQnG7lesIRZYYnwOLiz',
+        center: [-96, 37.8],
+        zoom: 3
+    });
+
+		// https://maplibre.org/maplibre-gl-js-docs/api/markers/#popup
+    var popup = new maplibregl.Popup({ closeOnClick: false })
+
+		const polygonGeoJSON = {
+		  "type": "FeatureCollection",
+		  "features": [
+		    {
+		      "type": "Feature",
+		      "properties": {
+						"name" : "Big Square"
+					},
+		      "geometry": {
+		        "coordinates": [
+		          [
+		            [
+		              -103.16190973856989,
+		              43.69530791770973
+		            ],
+		            [
+		              -103.16190973856989,
+		              36.40609683120665
+		            ],
+		            [
+		              -92.9706873438928,
+		              36.40609683120665
+		            ],
+		            [
+		              -92.9706873438928,
+		              43.69530791770973
+		            ],
+		            [
+		              -103.16190973856989,
+		              43.69530791770973
+		            ]
+		          ]
+		        ],
+		        "type": "Polygon"
+		      }
+		    },
+		    {
+		      "type": "Feature",
+		      "properties": {
+						"name" : "Little Square"
+					},
+		      "geometry": {
+		        "coordinates": [
+		          [
+		            [
+		              -119.32673977103425,
+		              46.86239781188169
+		            ],
+		            [
+		              -119.32673977103425,
+		              42.576775948771456
+		            ],
+		            [
+		              -112.81770269608896,
+		              42.576775948771456
+		            ],
+		            [
+		              -112.81770269608896,
+		              46.86239781188169
+		            ],
+		            [
+		              -119.32673977103425,
+		              46.86239781188169
+		            ]
+		          ]
+		        ],
+		        "type": "Polygon"
+		      }
+		    }
+		  ]
+		}
+
+		map.on('load', () => {
+			map.addSource('polygon', {
+				type : "geojson",
+				data : polygonGeoJSON
+			})
+			map.addLayer({
+				id : 'polygon-layer',
+				type : "fill",
+				source : 'polygon'
+			})
+
+      const turfBounds = turf.bbox(polygonGeoJSON)
+      map.fitBounds(turfBounds);
+		})
+
+
+</script>
+
+</body>
+</html>

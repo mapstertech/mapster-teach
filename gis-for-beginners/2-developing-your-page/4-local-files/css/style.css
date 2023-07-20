@@ -1,0 +1,20 @@
+
+  /* .number-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  } */
+  .calculator-container {
+    width: 200px;
+  }
+  .calc-toolbar {
+    margin-bottom: 0px;
+  }
+  .calc-toolbar .btn-group {
+    width: 100%;
+  }
+  #number-0 {
+    width: 100%;
+  }
+  button {
+    border-radius: 0px !important;
+  }

@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Leaflet Basic Popups</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
+			crossorigin="anonymous"
+		></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		.leaflet-container {  /* this isn't actually used anywhere! */
+			height: 400px;
+			width: 600px;
+			max-width: 100%;
+			max-height: 100%;
+		}
+		.popup-style {
+			color: red;
+		}
+	</style>
+
+
+</head>
+<body>
+
+
+
+<div id="map" style="width: 600px; height: 400px;"></div>
+<script>
+
+	const map = L.map('map').setView([51.505, -0.09], 13);
+
+	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+	const marker = L.marker([51.5, -0.09]).addTo(map)
+		.bindPopup('<b>Hello world!</b><br />I am a popup.')
+
+	const circle = L.circle([51.508, -0.11], {
+		color: 'red',
+		fillColor: '#f03',
+		fillOpacity: 0.5,
+		radius: 500
+	}).addTo(map)
+
+	circle.bindPopup('I am a circle.');
+
+	const polygon = L.polygon([
+		[51.509, -0.08],
+		[51.503, -0.06],
+		[51.51, -0.047]
+	]).addTo(map).bindPopup('I am a polygon.');
+
+
+	const popup = L.popup({
+		closeButton : false
+	})
+		.setLatLng([51.513, -0.09])
+		.setContent('<div style="background:red">I am a standalone popup.</div>')
+		.openOn(map);
+
+	function onMapClick(e) {
+		console.log(e)
+		popup
+			.setLatLng(e.latlng)
+			.setContent(`You clicked the map at ${e.latlng.toString()}`)
+			.openOn(map);
+	}
+
+	// function onMapClick(e) {
+	// 	popup
+	// 		.setLatLng(e.latlng)
+	// 		.setContent(`
+	// 			<div>
+	// 				<h3>Popup</h3>
+	// 				<div class="popup-style">Popup Make this red!</div>
+	// 				<button class="btn btn-primary">Bootstrap button!</button>
+	// 			</div>
+	// 		`)
+	// 		.openOn(map);
+	// }
+
+	// map.on('click', onMapClick);
+
+	map.on('mousemove', onMapClick);
+
+	map.on('mouseout', function() {
+		popup.remove();
+	});
+
+</script>
+
+
+
+</body>
+</html>

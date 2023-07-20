@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Do animation</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://demotiles.maplibre.org/style.json', // style URL
+        center: [0, 0], // starting position [lng, lat]
+        zoom: 1 // starting zoom
+    });
+
+    // https://maplibre.org/maplibre-gl-js-docs/example/add-image-animated/
+    // https://maplibre.org/maplibre-gl-js-docs/example/animate-a-line/
+    // https://maplibre.org/maplibre-gl-js-docs/example/animate-point-along-route/
+    // https://maplibre.org/maplibre-gl-js-docs/example/animate-point-along-line/
+
+    // San Francisco
+    var origin = [-122.414, 37.776];
+
+    // Washington DC
+    var destination = [-77.032, 38.913];
+
+    // A simple line from origin to destination.
+    var route = {
+      'type': 'FeatureCollection',
+      'features': [{
+        'type': 'Feature',
+        'geometry': {
+          'type': 'LineString',
+          'coordinates': [origin, destination]
+        }
+      }]
+    };
+
+    var point = {
+      'type': 'FeatureCollection',
+      'features': [{
+        'type': 'Feature',
+        'properties': {},
+        'geometry': {
+          'type': 'Point',
+          'coordinates': origin
+        }
+      }]
+    };
+
+    map.on('load', () => {
+
+      map.addSource('circle', {
+        type : "geojson",
+        data : point
+      })
+
+      map.addLayer({
+        type : 'circle',
+        id : 'circle-layer',
+        source : 'circle'
+      })
+
+      map.addSource('line', {
+        type : 'geojson',
+        data : route
+      })
+
+      map.addLayer({
+        type : 'line',
+        id : 'line-layer',
+        source : 'line'
+      })
+
+      const lineFeature = route.features[0]
+      const lengthOfLine = turf.length(lineFeature)
+
+      let animationParts = 200;
+      let sectionOfLine = lengthOfLine / animationParts;
+      let animationCount = 0;
+      // Set interval is like settimeout, but it runs repeatedly at the interval given, in this case 10ms (0.01s)
+      const animationInterval = setInterval(() => {
+        if(animationCount === animationParts) {
+          clearInterval(animationInterval)
+        } else {
+          // https://turfjs.org/docs/#along
+          const currentPointForMarker = turf.along(lineFeature, sectionOfLine * animationCount)
+          map.getSource('circle').setData({ type : "FeatureCollection", features : [currentPointForMarker] })
+          animationCount = animationCount + 1;
+        }
+      }, 10)
+
+    })
+
+</script>
+
+</body>
+</html>

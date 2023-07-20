@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+</head>
+<body>
+
+</body>
+<script>
+// Testing the console
+// Learning some basic syntax
+console.log("Hello!");
+console.log('Hello2!');
+console.log("Another Hello")
+
+// Doing psuedocode can help us to get organized
+// We need to write out every step for the computer
+// Since we're making a calculator, we're going to need some basic things!
+
+// FUNCTION ONE
+// We need to have a first number
+// And a second number
+// And we need to "return" them added together
+
+// FUNCTION TWO
+// Have a first number
+// And a second number
+// And "return" them subtracted (order matters!)
+
+// FUNCTION THREE
+// What if the user adds a whole bunch of numbers together?
+// We could add them one by one, OR we can do it as a list of numbers and add them together
+// (this mainly just lets me show you what an array is!)
+
+// FUNCTION FOUR
+// What if the user does a whole bunch of different things, like
+// adding and subtracting and multiplying, at once?
+// (this mainly just lets me show you what an object is!)
+
+  // DON'T CALL YOUR FUNCTION THIS NAME! BAD BAD.
+function functionOne() {} // NO NO
+
+// Demonstrating variables, returning a value
+// Demonstrating scope of variable names
+let globalVariable = "Watch out!"
+function addNumbers() {
+  let firstNumber = 0;
+  const secondNumber = 2;
+  let sumNumber = firstNumber + secondNumber;
+  return sumNumber;
+  // Could also write like
+  // return firstNumber + secondNumber;
+}
+
+function subtractNumbers() {
+  let firstNumber = 0;
+  const secondNumber = 2;
+  let differenceNumber = firstNumber - secondNumber;
+  return differenceNumber;
+  // Could also write like
+  // return firstNumber - secondNumber;
+}
+
+// Demonstrating calling built-in JS functions
+// Redefining a variable in relation to itself
+function getARandomWholeNumber() {
+  let randomNumber = Math.random(); // Generates a number between 0 and 1
+  randomNumber = randomNumber * 10;
+  let roundedNumber = Math.round(randomNumber);
+  return roundedNumber;
+}
+
+const addedNumber = addNumbers();
+console.log(addedNumber);
+const randomWholeNumber = getARandomWholeNumber();
+console.log(randomWholeNumber);
+
+// Demonstrating passing a parameter to a function
+function addGivenNumbers(firstNumber, secondNumber) {
+  return firstNumber + secondNumber;
+}
+
+// Demonstrating using another function to pass in parameters!
+const addedRandomNumbers = addGivenNumbers(getARandomWholeNumber(), getARandomWholeNumber());
+console.log(addedRandomNumbers);
+
+// Demonstrating what an array looks like and how to reference it
+// Showing .length, showing [] syntax
+function addAListOfNumbers() {
+  let imaginedUserNumbers = [1, 4, 25, 3];
+  let finalResult = 0;
+  // imaginedUserNumbers[0]
+  // imaginedUserNumbers[2]
+  // imaginedUserNumbers.length
+  imaginedUserNumbers.forEach(function(thisNumber) {
+    finalResult = finalResult + thisNumber;
+    console.log(finalResult);
+  })
+  return finalResult;
+}
+function multiplyAListOfNumbers() {
+  let imaginedUserNumbers = [1, 4, 25, 3];
+  let finalResult = 0;
+  // imaginedUserNumbers[0]
+  // imaginedUserNumbers[2]
+  // imaginedUserNumbers.length
+  imaginedUserNumbers.forEach(function(thisNumber) {
+    finalResult = finalResult * thisNumber;
+    console.log(finalResult);
+  })
+  return finalResult;
+}
+
+const sumOfList = addAListOfNumbers();
+console.log(sumOfList);
+
+// Demonstrating what an object looks like an how to reference it
+// A very contrived example -- you wouldn't do this!
+function addUsingAnObject() {
+  let imaginedUserNumbers = {
+    firstNumber : 1,
+    secondNumber : 4,
+    thirdNumber : 8
+  }
+  console.log(imaginedUserNumbers.firstNumber);
+  // We can also change one, like
+  // imaginedUserNumbers.firstNumber = 0;
+  return imaginedUserNumbers.firstNumber + imaginedUserNumbers.secondNumber + imaginedUserNumbers.thirdNumber;
+}
+
+// Showing if statements
+// Objects inside arrays, arrays inside objects!
+// Creating arrays with push()
+function doingASetOfOperations() {
+  let imaginedUserMath = [{
+    numbers : [5, 10, 20],
+    operation : 'add'
+  },{
+    numbers : [5, 5, 0],
+    operation : 'multiply'
+  }]
+  let finishedMath = []
+  // Another syntax for writing functions... getting confused yet?!
+  imaginedUserMath.forEach(thisMath => {
+    let finalResult = 0;
+    if(thisMath.operation === 'add') {
+      finalResult = addAListOfNumbers(thisMath.numbers)
+    }
+    if(thisMath.operation === 'multiply') {
+      finalResult = multiplyAListOfNumbers(thisMath.numbers)
+    }
+    finishedMath.push(finalResult)
+  })
+  return finishedMath;
+}
+
+const operationResults = doingASetOfOperations();
+console.log(operationResults)
+</script>
+</html>

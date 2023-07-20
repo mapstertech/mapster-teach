@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Static Template</title>
+    <style>
+      /* General styles */
+      body {
+        font-family: "Gill Sans", sans-serif;
+      }
+      .heading {
+        margin: 0;
+      }
+      .main_text {
+        text-align: left;
+      }
+      .parent-container {
+        width: 50%;
+      }
+      /* input styles */
+      #text-input {
+        width: 95%;
+        height: 20px;
+        border-radius: 5px;
+        padding: 5px;
+        text-align: right;
+      }
+      /* Calculator layout */
+      .main-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+      }
+      .calculator-container {
+        background-color: #eeeeee;
+        padding: 10px;
+      }
+      .operations-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      /* Calculator button styles */
+      button {
+        background: #cccccc;
+        color: black;
+        padding: 5px 10px;
+        margin: 2px;
+        border-radius: 3px;
+        font-size: 20px;
+        width: 40px;
+      }
+      #equals_button {
+        background: #3c9a33;
+      }
+      #c_id_button {
+        background: #ffffff;
+      }
+      .operations-buttons button {
+        background: #dddddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="parent-container">
+      <h1 class="heading">
+        Mapster Calculator
+      </h1>
+      <p class="main_text">
+        This calculator will be our first go at HTML, CSS, and Javascript in web
+        development.
+      </p>
+      <div class="calculator-container">
+        <div>
+          <input id="text-input" type="text" />
+        </div>
+        <div class="main-grid">
+          <div class="number-buttons">
+            <div>
+              <button>7</button>
+              <button>8</button>
+              <button>9</button>
+            </div>
+            <div>
+              <button>4</button>
+              <button>5</button>
+              <button>6</button>
+            </div>
+            <div>
+              <button>1</button>
+              <button>2</button>
+              <button>3</button>
+            </div>
+            <div>
+              <button>0</button>
+            </div>
+          </div>
+          <div class="operations-buttons">
+            <div>
+              <button>+</button>
+              <button>-</button>
+              <button>*</button>
+              <button>/</button>
+            </div>
+            <div>
+              <button id="equals_button">=</button>
+              <button id="c_id_button">C</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

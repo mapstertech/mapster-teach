@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Animation along a line</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			top: 0;
+			bottom: 0;
+			position: absolute;
+		}
+	</style>
+
+
+</head>
+<body>
+
+	<div id="map" ></div>
+
+<script>
+
+	const map = L.map('map').setView([0, 0], 2);
+
+	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+  const sampleLineGeoJSON = {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "coordinates": [
+            [
+              14.876181391316749,
+              24.511506896359776
+            ],
+            [
+              24.78823367753691,
+              17.236090743449083
+            ],
+            [
+              35.84208605897629,
+              12.045398304305948
+            ],
+            [
+              38.89124222536506,
+              11.19484684859286
+            ]
+          ],
+          "type": "LineString"
+        }
+      }
+    ]
+  }
+
+  const line = L.geoJSON(sampleLineGeoJSON).addTo(map)
+
+	const marker = L.marker([51.5, -0.09]).addTo(map);
+
+  // set timeout waits a certain amount of time before executing, in this case 2000 ms (2 s)
+  setTimeout(() => {
+
+    const lineFeature = sampleLineGeoJSON.features[0]
+    const lengthOfLine = turf.length(lineFeature)
+    // We divide the line up into, say, 200 parts
+    let animationParts = 200;
+    let sectionOfLine = lengthOfLine / animationParts;
+    let animationCount = 0;
+    // Set interval is like settimeout, but it runs repeatedly at the interval given, in this case 10ms (0.01s)
+    const animationInterval = setInterval(() => {
+      if(animationCount === animationParts) {
+        clearInterval(animationInterval)
+      } else {
+        // https://turfjs.org/docs/#along
+        const currentPointForMarker = turf.along(lineFeature, sectionOfLine * animationCount)
+        let reversedCoordinates = [currentPointForMarker.geometry.coordinates[1], currentPointForMarker.geometry.coordinates[0]] // Need to reverse, because it's leaflet!
+        marker.setLatLng(reversedCoordinates)
+        animationCount = animationCount + 1;
+      }
+    }, 10)
+
+  }, 2000)
+
+</script>
+
+
+
+</body>
+</html>

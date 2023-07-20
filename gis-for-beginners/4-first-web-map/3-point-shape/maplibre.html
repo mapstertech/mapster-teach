@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Working with Points</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=mkQnG7lesIRZYYnwOLiz', // style URL
+        center: [12.550343, 55.665957], // starting position [lng, lat]
+        zoom: 10 // starting zoom
+    });
+
+    // https://maplibre.org/maplibre-gl-js-docs/example/add-a-marker/
+    // var marker = new maplibregl.Marker({
+		// 	color : "red"
+		// })
+    //   .setLngLat([12.550343, 55.665957])
+    //   .addTo(map);
+
+    map.on('load', function() {
+
+			// Core idea here: https://maplibre.org/maplibre-gl-js-docs/example/geojson-line/
+			// Then for circles https://maplibre.org/maplibre-style-spec/layers/#circle
+			map.addSource("our-source", {
+				type : "geojson",
+				data : {
+					type : "FeatureCollection",
+					features : [{
+						type : "Feature",
+						properties : {},
+						geometry : {
+							type : "Point",
+							coordinates : [12.550343, 55.665957]
+						}
+					}]
+				}
+			})
+			map.addLayer({
+				id : "our-circle-layer",
+				type : "circle",
+				source : "our-source"
+			})
+
+			// Adding some text instead ("symbol")
+			// https://maplibre.org/maplibre-style-spec/layers/#symbol
+			map.addLayer({
+				id : "our-symbol-layer",
+				type : "symbol",
+				source : "our-source",
+				layout : {
+					'text-field' : "LABEL!"
+				},
+				paint : {
+					'text-color' : 'red'
+				}
+			})
+
+
+
+    });
+</script>
+
+</body>
+</html>

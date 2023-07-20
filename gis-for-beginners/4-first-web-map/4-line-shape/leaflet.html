@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Working with Lines / Polylines</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			top: 0;
+			bottom: 0;
+			position: absolute;
+		}
+	</style>
+
+
+</head>
+<body>
+
+	<div id="map" ></div>
+
+<script>
+
+	const map = L.map('map').setView([51.505, -0.09], 13);
+
+	const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+	// Polyline
+	// https://leafletjs.com/reference.html#polyline
+	// var latlngs = [
+	// 	[
+	// 		-0.10470262429782906,
+	// 		51.522809059877574
+	// 	],
+	// 	[
+	// 		-0.15006226513304455,
+	// 		51.50678783618662
+	// 	],
+	// 	[
+	// 		-0.07650609080744175,
+	// 		51.482363706445994
+	// 	],
+	// 	[
+	// 		-0.08263577200065697,
+	// 		51.49381414669719
+	// 	]
+	// ];
+	//
+	// latlngs.forEach(latlng => {
+	// 	latlng.reverse()
+	// })
+	//
+	// var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+
+	// Adding as geoJSON
+	// https://leafletjs.com/reference.html#geojson
+	let geojson = {
+	  "type": "FeatureCollection",
+	  "features": [
+	    {
+	      "type": "Feature",
+	      "properties": {},
+	      "geometry": {
+	        "coordinates": [
+	          [
+	            -0.10470262429782906,
+	            51.522809059877574
+	          ],
+	          [
+	            -0.15006226513304455,
+	            51.50678783618662
+	          ],
+	          [
+	            -0.07650609080744175,
+	            51.482363706445994
+	          ],
+	          [
+	            -0.08263577200065697,
+	            51.49381414669719
+	          ]
+	        ],
+	        "type": "LineString"
+	      }
+	    }
+	  ]
+	}
+	// L.geoJSON(geojson).addTo(map)
+	L.geoJSON(geojson, {
+    style: function (feature) {
+        return { color: 'red' };
+    }
+	}).addTo(map);
+
+</script>
+
+
+
+</body>
+</html>

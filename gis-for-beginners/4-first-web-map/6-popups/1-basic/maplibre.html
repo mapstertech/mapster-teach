@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Display basic popups</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map',
+        style:
+            'https://api.maptiler.com/maps/basic-v2/style.json?key=mkQnG7lesIRZYYnwOLiz',
+        center: [-96, 37.8],
+        zoom: 3
+    });
+
+		// var marker = new maplibregl.Marker()
+		// 	.setLngLat([-96, 37.8])
+		// 	.setPopup(
+		// 		new maplibregl.Popup().setHTML("<h1>Marker popup bound!</h1>")
+		// 	)
+		// 	.addTo(map);
+
+		// https://maplibre.org/maplibre-gl-js-docs/api/markers/#popup
+    var popup = new maplibregl.Popup({ closeOnClick: false })
+        .setLngLat([-96, 37.8])
+        .setHTML('<h1>Random popup!</h1>')
+				.addTo(map);
+
+		// map.on('click', function(e) {
+		// 	popup.setLngLat(e.lngLat).setHTML(
+		// 		`You clicked the map at ${e.lngLat.toString()}`
+		// 	).addTo(map)
+		// })
+
+		// map.on('mousemove', function(e) {
+		// 	popup.setLngLat(e.lngLat).setHTML(
+		// 		`You moved the mouse at ${e.lngLat.toString()}`
+		// 	).addTo(map)
+		// })
+
+
+		// When it comes to having popups on lines or polygons, we have to do it using listening for events
+		const polygonGeoJSON = {
+		  "type": "FeatureCollection",
+		  "features": [
+		    {
+		      "type": "Feature",
+		      "properties": {},
+		      "geometry": {
+		        "coordinates": [
+		          [
+		            [
+		              -103.16190973856989,
+		              43.69530791770973
+		            ],
+		            [
+		              -103.16190973856989,
+		              36.40609683120665
+		            ],
+		            [
+		              -92.9706873438928,
+		              36.40609683120665
+		            ],
+		            [
+		              -92.9706873438928,
+		              43.69530791770973
+		            ],
+		            [
+		              -103.16190973856989,
+		              43.69530791770973
+		            ]
+		          ]
+		        ],
+		        "type": "Polygon"
+		      }
+		    }
+		  ]
+		}
+
+		map.on('load', () => {
+			map.addSource('polygon', {
+				type : "geojson",
+				data : polygonGeoJSON
+			})
+			map.addLayer({
+				id : 'polygon-layer',
+				type : "fill",
+				source : 'polygon'
+			})
+
+			map.on('click', 'polygon-layer', function(e) {
+				popup.setLngLat(e.lngLat).setHTML(
+					`You clicked the polygon!`
+				).addTo(map)
+			})
+
+			// You'd do the same pattern for a line :)
+		})
+
+
+</script>
+
+</body>
+</html>

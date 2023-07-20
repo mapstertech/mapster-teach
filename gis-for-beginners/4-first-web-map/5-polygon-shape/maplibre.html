@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Working with Fills / Polygons</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=mkQnG7lesIRZYYnwOLiz', // style URL
+        center: [12.550343, 55.665957], // starting position [lng, lat]
+        zoom: 10 // starting zoom
+    });
+
+    map.on('load', function() {
+
+			// Core idea here: https://maplibre.org/maplibre-gl-js-docs/example/geojson-line/
+			let geojson = {
+			  "type": "FeatureCollection",
+			  "features": [
+			    {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "coordinates": [
+			          [
+			            12.561403078426281,
+			            55.69389010204304
+			          ],
+			          [
+			            12.592895674583048,
+			            55.665987808040114
+			          ],
+			          [
+			            12.61389073868662,
+			            55.67444515062988
+			          ]
+			        ],
+			        "type": "LineString"
+			      }
+			    },
+			    {
+			      "type": "Feature",
+			      "properties": {},
+			      "geometry": {
+			        "coordinates": [
+			          [
+			            [
+			              12.578028050588586,
+			              55.69645032403699
+			            ],
+			            [
+			              12.569011348337966,
+			              55.67823698699681
+			            ],
+			            [
+			              12.599067022505864,
+			              55.6676439373351
+			            ],
+			            [
+			              12.614094859589812,
+			              55.68416784207838
+			            ],
+			            [
+			              12.578028050588586,
+			              55.69645032403699
+			            ]
+			          ]
+			        ],
+			        "type": "Polygon"
+			      }
+			    }
+			  ]
+			}
+			map.addSource("our-source", {
+				type : "geojson",
+				data : geojson
+			})
+			map.addLayer({
+				id : "our-fill-layer",
+				type : "fill",
+				source : "our-source",
+				paint : {
+					'fill-color' : "#FF0000",
+				  'fill-opacity' : 0.5
+				}
+			})
+
+
+    });
+</script>
+
+</body>
+</html>

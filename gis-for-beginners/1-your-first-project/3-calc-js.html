@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Static Template</title>
+    <style>
+      /* General styles */
+      body {
+        font-family: "Gill Sans", sans-serif;
+      }
+      .heading {
+        margin: 0;
+      }
+      .main_text {
+        text-align: left;
+      }
+      .parent-container {
+        width: 50%;
+      }
+      /* input styles */
+      #text-input {
+        width: 95%;
+        height: 20px;
+        border-radius: 5px;
+        padding: 5px;
+        text-align: right;
+      }
+      /* Calculator layout */
+      .main-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+      }
+      .calculator-container {
+        background-color: #eeeeee;
+        padding: 10px;
+      }
+      .operations-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      /* Calculator button styles */
+      button {
+        background: #cccccc;
+        color: black;
+        padding: 5px 10px;
+        margin: 2px;
+        border-radius: 3px;
+        font-size: 20px;
+        width: 40px;
+      }
+      #equals_button {
+        background: #3c9a33;
+      }
+      #c_id_button {
+        background: #ffffff;
+      }
+      .operations-buttons button {
+        background: #dddddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="parent-container">
+      <h1 class="heading">
+        Mapster Calculator
+      </h1>
+      <p class="main_text">
+        This calculator will be our first go at HTML, CSS, and Javascript in web
+        development.
+      </p>
+      <div class="calculator-container">
+        <div>
+          <input id="text-input" type="text" />
+        </div>
+        <div class="main-grid">
+          <div class="number-buttons">
+            <div>
+              <button id="number-7">7</button>
+              <button id="number-8">8</button>
+              <button id="number-9">9</button>
+            </div>
+            <div>
+              <button id="number-4">4</button>
+              <button id="number-5">5</button>
+              <button id="number-6">6</button>
+            </div>
+            <div>
+              <button id="number-1">1</button>
+              <button id="number-2">2</button>
+              <button id="number-3">3</button>
+            </div>
+            <div>
+              <button id="number-0">0</button>
+            </div>
+          </div>
+          <div class="operations-buttons">
+            <div>
+              <button id="add_button">+</button>
+              <button id="subtract_button">-</button>
+              <button id="multiply_button">*</button>
+              <button id="divide_button">/</button>
+            </div>
+            <div>
+              <button id="equals_button">=</button>
+              <button id="c_id_button">C</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+
+    let numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    numbers.forEach(function (number) {
+      document
+        .getElementById("number-" + number)
+        .addEventListener("click", function () {
+          let currentValue = document.getElementById("text-input").value;
+          document.getElementById("text-input").value = currentValue + number;
+        });
+    });
+
+    document.getElementById("c_id_button").addEventListener("click", function () {
+      document.getElementById("text-input").value = "";
+    });
+
+    let savedNumber = 0;
+    document.getElementById("add_button").addEventListener("click", function () {
+      let currentValue = document.getElementById("text-input").value;
+      savedNumber = parseInt(currentValue) + parseInt(savedNumber);
+      document.getElementById("text-input").value = "";
+    });
+
+    document.getElementById("equals_button").addEventListener("click", function () {
+      let currentValue = document.getElementById("text-input").value;
+      document.getElementById("text-input").value =
+        parseInt(currentValue) + parseInt(savedNumber);
+    });
+
+  </script>
+</html>
