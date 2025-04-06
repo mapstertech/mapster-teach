@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Display a map</title>
+    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    const map = new maplibregl.Map({
+      container: 'map', // container id
+      style: 'https://demotiles.maplibre.org/style.json', // style URL
+      center: [0, 0], // starting position [lng, lat]
+      zoom: 1, // starting zoom
+      maplibreLogo: true
+    });
+
+    const startPoint = [
+      -71.41964192246112,
+      46.78618570255421
+    ];
+    const endPoint = [
+      13.20124804140417,
+      52.545269004784814
+    ];
+
+    map.on('load', async () => {
+
+      // Adding a basic line, no great circle
+      map.addSource('line', {
+        type : "geojson",
+        data : {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "properties": {},
+              "geometry": {
+                "coordinates": [
+                  [
+                    -71.41964192246112,
+                    46.78618570255421
+                  ],
+                  [
+                    13.20124804140417,
+                    52.545269004784814
+                  ]
+                ],
+                "type": "LineString"
+              }
+            }
+          ]
+        }
+      })
+      map.addLayer({
+        id : "line",
+        type : "line",
+        source : "line"
+      })
+
+      // Adding a great circle instead
+      // https://turfjs.org/docs/api/greatCircle
+      const greatCircleLine = turf.greatCircle(startPoint, endPoint);
+      const greatCircleLineLength = turf.length(greatCircleLine)
+      const distanceChunks = 200;
+      const slicedLine = turf.lineSliceAlong(greatCircleLine, 0, greatCircleLineLength / distanceChunks);
+      map.addSource('great-circle-line', {
+        type : "geojson",
+        data : {
+          "type": "FeatureCollection",
+          "features": [ slicedLine ]
+        }
+      })
+      map.addLayer({
+        id : "great-circle-line",
+        type : "line",
+        source : "great-circle-line",
+        paint : {
+          'line-color' : "red"
+        }
+      })
+
+      const intervalDistance = greatCircleLineLength / distanceChunks;
+      let currentInterval = 1;
+
+      const lineInterval = setInterval(() => {
+        const slicedLineAlong = turf.lineSliceAlong(greatCircleLine, 0, intervalDistance * currentInterval);
+        map.getSource('great-circle-line').setData({ type : "FeatureCollection", features : [slicedLineAlong] })
+        currentInterval = currentInterval + 1;
+        if(intervalDistance * currentInterval >= greatCircleLineLength) {
+          clearInterval(lineInterval);
+        }
+      }, 10)
+
+    })
+
+</script>
+</body>
+</html>

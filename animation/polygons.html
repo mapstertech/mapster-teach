@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Display a map</title>
+    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    const map = new maplibregl.Map({
+      container: 'map', // container id
+      style: 'https://demotiles.maplibre.org/style.json', // style URL
+      center: [0, 0], // starting position [lng, lat]
+      zoom: 1, // starting zoom
+      maplibreLogo: true
+    });
+
+    const startPolygon = {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              7.871093749999005,
+              17.44289872273201
+            ],
+            [
+              6.4648437500001705,
+              -3.373046725437092
+            ],
+            [
+              39.33593749999969,
+              -5.301011556881903
+            ],
+            [
+              42.32421874999929,
+              19.443805394373896
+            ],
+            [
+              7.871093749999005,
+              17.44289872273201
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }
+
+    const endPolygon = {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              21.338015701599716,
+              46.32301304855832
+            ],
+            [
+              1.0095509045626159,
+              27.70634907174697
+            ],
+            [
+              -26.540868491423055,
+              8.49414740807903
+            ],
+            [
+              -26.273388691461292,
+              -23.425770877001654
+            ],
+            [
+              5.021747903977712,
+              -50.789875493715755
+            ],
+            [
+              46.74859669789606,
+              -43.531211327010276
+            ],
+            [
+              77.24129389345268,
+              -28.002816295872492
+            ],
+            [
+              92.2201626912697,
+              2.907110019681781
+            ],
+            [
+              70.55429889442664,
+              29.117860530671564
+            ],
+            [
+              46.74859669789606,
+              39.68235613027471
+            ],
+            [
+              21.338015701599716,
+              46.32301304855832
+            ]
+          ]
+        ],
+        "type": "Polygon"
+      }
+    }
+
+    map.on('load', async () => {
+
+      // Adding a basic line, no great circle
+      map.addSource('fill', {
+        type : "geojson",
+        data : startPolygon
+      })
+      map.addLayer({
+        id : "fill",
+        type : "fill",
+        source : "fill",
+        paint : {
+          'fill-opacity' : 0.4
+        }
+      })
+
+      // Equalize both polygons to have the same number of points
+      const firstPolyAsLine = turf.polygonToLine(startPolygon);
+      const secondPolyAsLine = turf.polygonToLine(endPolygon);
+
+      const firstPolyLength = turf.length(firstPolyAsLine);
+      const secondPolyLength = turf.length(secondPolyAsLine);
+
+      const lineChunks = 100;
+      const revisedFirstPolygonCoords = []
+      const revisedSecondPolygonCoords = [];
+      for(let i=0; i < lineChunks; i++) {
+        const firstPolygonPoint = turf.along(firstPolyAsLine, (firstPolyLength / 100) * i)
+        const secondPolygonPoint = turf.along(secondPolyAsLine, (secondPolyLength / 100) * i)
+        revisedFirstPolygonCoords.push(firstPolygonPoint.geometry.coordinates);
+        revisedSecondPolygonCoords.push(secondPolygonPoint.geometry.coordinates);
+      }
+
+      const expandingLines = [];
+      const animationSteps = 200;
+      revisedFirstPolygonCoords.forEach((point, index) => {
+        const endpoint = revisedSecondPolygonCoords[index];
+        const pointConnector = { type : "Feature", properties : {}, geometry : { type : "LineString", coordinates : [ point, endpoint ]}};
+        const lineLength = turf.length(pointConnector);
+        let thisLine = [];
+        for(let i=0; i < animationSteps; i++) {
+          const intermediatePoint = turf.along(pointConnector, (lineLength / animationSteps) * i);
+          thisLine.push(intermediatePoint.geometry.coordinates)
+        }
+        expandingLines.push(thisLine)
+      })
+
+      const expandingPolygons = [];
+      const numberOfPoints = expandingLines[0].length;
+      for(let i=0; i < numberOfPoints; i++) {
+        let thisPolygon = [];
+        for(let ii=0; ii < expandingLines.length; ii++) {
+          thisPolygon.push(expandingLines[ii][i]);
+        }
+        thisPolygon.push(thisPolygon[0]); // To make sure to close the polygon
+        expandingPolygons.push(thisPolygon)
+      }
+
+      map.getSource('fill').setData({ type : "FeatureCollection", features : [{
+        type : "Feature",
+        properties : {},
+        geometry : {
+          type : "Polygon",
+          coordinates : [ revisedFirstPolygonCoords ]
+        }
+      }]})
+
+      let currentPolygon = 0;
+      const polygonExpansionInterval = setInterval(() => {
+        if(expandingPolygons[currentPolygon]) {
+          map.getSource('fill').setData({ type : "FeatureCollection", features : [{
+            type : "Feature",
+            properties : {},
+            geometry : {
+              type : "Polygon",
+              coordinates : [ expandingPolygons[currentPolygon] ]
+            }
+          }]})
+          currentPolygon = currentPolygon + 1;
+        } else {
+          clearInterval(polygonExpansionInterval);
+        }
+      }, 10)
+
+    })
+
+</script>
+</body>
+</html>

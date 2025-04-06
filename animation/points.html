@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Display a map</title>
+    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.3.0/dist/maplibre-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    const map = new maplibregl.Map({
+      container: 'map', // container id
+      style: 'https://demotiles.maplibre.org/style.json', // style URL
+      center: [0, 0], // starting position [lng, lat]
+      zoom: 1, // starting zoom
+      maplibreLogo: true
+    });
+
+    const startPoint = [
+      -71.41964192246112,
+      46.78618570255421
+    ];
+    const endPoint = [
+      13.20124804140417,
+      52.545269004784814
+    ];
+
+    map.on('load', async () => {
+
+      // Adding a basic line, no great circle
+      map.addSource('line', {
+        type : "geojson",
+        data : {
+          "type": "FeatureCollection",
+          "features": [
+            {
+              "type": "Feature",
+              "properties": {},
+              "geometry": {
+                "coordinates": [
+                  startPoint,
+                  endPoint
+                ],
+                "type": "LineString"
+              }
+            }
+          ]
+        }
+      })
+      map.addLayer({
+        id : "line",
+        type : "line",
+        source : "line"
+      })
+      //
+      // // Adding a great circle instead
+      // // https://turfjs.org/docs/api/greatCircle
+      map.addSource('great-circle-line', {
+        type : "geojson",
+        data : {
+          "type": "FeatureCollection",
+          "features": [ turf.greatCircle(startPoint, endPoint) ]
+        }
+      })
+      map.addLayer({
+        id : "great-circle-line",
+        type : "line",
+        source : "great-circle-line",
+        paint : {
+          'line-color' : "red"
+        }
+      })
+      //
+      // // Adding a marker at the start
+      // let marker = new maplibregl.Marker()
+      //   .setLngLat(startPoint)
+      //   .addTo(map);
+      // //
+      // // // Animating a marker along this line
+      const greatCircleLine = turf.greatCircle(startPoint, endPoint);
+      const greatCircleLineLength = turf.length(greatCircleLine);
+      const numberOfAnimatedPoints = 400;
+      const distancePerPoint = greatCircleLineLength / numberOfAnimatedPoints;
+
+      let animatedPoints = [];
+      for(let i=0; i < numberOfAnimatedPoints; i++) {
+        const thisPoint = turf.along(greatCircleLine, distancePerPoint * i);
+        animatedPoints.push(thisPoint);
+      }
+
+      // let currentPointIndex = 0;
+      // const animationInterval = setInterval(() => {
+      //   marker.setLngLat(animatedPoints[currentPointIndex].geometry.coordinates)
+      //   currentPointIndex = currentPointIndex + 1;
+      //   if(currentPointIndex === numberOfAnimatedPoints - 1) {
+      //     clearInterval(animationInterval)
+      //   }
+      // }, 30)
+
+      // // Animating a point layer along the line
+      // const image = await map.loadImage('http://localhost:8000/airplane.png');  // https://docs.mapbox.com/mapbox-gl-js/example/add-image/ or https://maplibre.org/maplibre-gl-js/docs/examples/add-image/
+      // map.addImage('airplane', image.data);
+      //
+      // map.addSource("point-layer", {
+      //   type : "geojson",
+      //   data : {
+      //     "type": "FeatureCollection",
+      //     "features": [{
+      //       "type": "Feature",
+      //       "properties": {},
+      //       "geometry": {
+      //         "coordinates": startPoint,
+      //         "type": "Point"
+      //       }
+      //     }]
+      //   }
+      // })
+      // map.addLayer({
+      //   id : "point-layer",
+      //   type : "symbol",
+      //   source : "point-layer",
+      //   layout : {
+      //     'icon-image' : "airplane",
+      //     'icon-size' : 0.1, // https://docs.mapbox.com/style-spec/reference/layers/#layout-symbol-icon-size
+      //     'icon-anchor' : 'bottom'
+      //   }
+      // });
+      //
+      // let currentPointIndex = 0;
+      // const animationInterval = setInterval(() => {
+      //   map.getSource('point-layer').setData({
+      //     "type": "FeatureCollection",
+      //     "features": [{
+      //       "type": "Feature",
+      //       "properties": {},
+      //       "geometry": {
+      //         "coordinates": animatedPoints[currentPointIndex].geometry.coordinates,
+      //         "type": "Point"
+      //       }
+      //     }]
+      //   });
+      //   currentPointIndex = currentPointIndex + 1;
+      //   if(currentPointIndex === numberOfAnimatedPoints - 1) {
+      //     clearInterval(animationInterval)
+      //   }
+      // }, 10)
+
+      // // Updating via properties of the layers
+      map.addSource("circle-layer", {
+        type : "geojson",
+        data : {
+          "type": "FeatureCollection",
+          "features": [{
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+              "coordinates": startPoint,
+              "type": "Point"
+            }
+          }]
+        }
+      })
+      map.addLayer({
+        id : "circle-layer",
+        type : "circle",
+        source : "circle-layer",
+        paint : {
+          'circle-radius' : 10
+        }
+      });
+
+      const maxSizeCircle = 100;
+      const circleInterval = setInterval(() => {
+        const currentCircleRadius = map.getPaintProperty('circle-layer', 'circle-radius');
+        if(maxSizeCircle === currentCircleRadius) {
+          clearInterval(circleInterval)
+        }
+        map.setPaintProperty('circle-layer', 'circle-radius', currentCircleRadius + 1);
+      }, 10)
+
+    })
+
+
+
+</script>
+</body>
+</html>
